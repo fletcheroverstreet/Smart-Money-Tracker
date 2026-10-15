@@ -1,0 +1,97 @@
+<!doctype html>
+<!-- "How a filing reaches the screen" (1280 x 560 CSS px, rendered at 2x). Every cadence and
+     rule here is the code's: see the Methodology page and docs/plan/PLAN.md. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="tokens.css">
+<style>
+  body { width: 1280px; height: 560px; overflow: hidden; }
+  .wrap { position: relative; height: 100%; padding: 44px 56px 44px 128px; background: var(--page); }
+  h1 { margin-top: 10px; font-family: var(--display); font-weight: 600; font-size: 38px; line-height: 44px; }
+  h1 .dim { font-weight: 500; }
+  .cols { margin-top: 30px; display: grid; grid-template-columns: 210px 1fr 1fr 170px; gap: 0; align-items: stretch; }
+  .col { position: relative; }
+  .col + .col { margin-left: 42px; }
+  .col + .col::before { content: "→"; position: absolute; left: -32px; top: 50%; transform: translateY(-50%);
+                        color: var(--rule); font-size: 22px; }
+  .label { margin-bottom: 10px; }
+  .src { display: grid; gap: 8px; }
+  .src .card, .outputs .card { padding: 9px 12px; }
+  .src b, .outputs b { display: block; font-size: 14px; font-weight: 600; }
+  .src span, .outputs span { display: block; margin-top: 2px; font-size: 12px; line-height: 16px; color: var(--dim); }
+  .stage { height: 100%; padding: 16px 18px; }
+  .stage .tier { font-family: var(--mono); font-size: 11px; letter-spacing: 0.16em; color: var(--inflow); text-transform: uppercase; font-weight: 500; }
+  .stage h2 { margin-top: 6px; font-family: var(--display); font-weight: 600; font-size: 26px; }
+  .stage .lead { margin-top: 2px; font-size: 13px; color: var(--dim); }
+  .stage ul { margin-top: 12px; list-style: none; display: grid; gap: 7px; }
+  .stage li { font-size: 13px; line-height: 18px; padding-left: 16px; position: relative; }
+  .stage li::before { content: "•"; position: absolute; left: 2px; color: var(--inflow-mark); }
+  .stage .note { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--hairline); font-family: var(--mono);
+                 font-size: 11px; color: var(--dim); }
+  .stage { background: var(--page); box-shadow: var(--shadow); }
+  .stage.worker { border-color: var(--inflow-mark); box-shadow: 0 0 0 3px rgb(20 149 138 / 0.12), var(--shadow); }
+  .outputs .card { background: var(--navy); border-color: var(--navy); }
+  .outputs b { color: var(--navy-ink); }
+  .outputs span { color: var(--navy-dim) !important; }
+  .outputs { display: grid; gap: 8px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="rail"><span class="logo">◎</span>SMT</div>
+  <p class="eyebrow">How a filing reaches the screen</p>
+  <h1>Keep the raw filing, check it, show it. <span class="dim">About a minute, end to end.</span></h1>
+  <div class="cols">
+    <div class="col">
+      <p class="eyebrow label">From the SEC</p>
+      <div class="src">
+        <div class="card"><b>EDGAR live feeds</b><span>Form 4 every 20 s, the others every minute, in filing hours</span></div>
+        <div class="card"><b>EDGAR daily index</b><span>every filing of the day, checked nightly</span></div>
+        <div class="card"><b>SEC data sets</b><span>Forms 3, 4 and 5 history, quarterly</span></div>
+        <div class="card"><b>finlake</b><span>daily closes, read-only, for the checks</span></div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card stage worker">
+        <p class="tier">The worker</p>
+        <h2>Collect and check</h2>
+        <p class="lead">One scheduler, under 10 SEC requests a second</p>
+        <ul>
+          <li>Stores an exact copy of every filing before reading it</li>
+          <li>Reads Forms 3, 4, 5 and 144 with versioned parsers</li>
+          <li>Flags values that can't be right: other currencies, ADS ratios, splits, typed totals</li>
+          <li>Names people and companies, using the filers' own signatures</li>
+          <li>Catches up after an outage and fills any day the daily index shows as short</li>
+        </ul>
+        <p class="note">Ingesting twice changes nothing: every write is keyed on the filing.</p>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card stage">
+        <p class="tier">Postgres + API</p>
+        <h2>One set of counting rules</h2>
+        <p class="lead">FastAPI over Postgres 18</p>
+        <ul>
+          <li>Every total counts open-market trades, one copy per trade</li>
+          <li>Flagged values are listed, and left out of dollar totals</li>
+          <li>Each trade keeps three times: traded, disclosed, on screen</li>
+          <li>A live stream pushes new filings to the page as they load</li>
+          <li>Status reports freshness, speed and what the checks found</li>
+        </ul>
+        <p class="note">A missing number is shown as “–”, never as zero.</p>
+      </div>
+    </div>
+    <div class="col">
+      <p class="eyebrow label">What you see</p>
+      <div class="outputs">
+        <div class="card"><b>Live</b><span>new filings as they arrive</span></div>
+        <div class="card"><b>People</b><span>every insider and seller</span></div>
+        <div class="card"><b>Tickers</b><span>timeline and rankings</span></div>
+        <div class="card"><b>Status</b><span>how fresh, how fast</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

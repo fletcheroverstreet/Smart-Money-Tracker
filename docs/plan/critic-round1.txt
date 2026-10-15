@@ -1,0 +1,144 @@
+#1 [blocker] Derivative-table P/S rows (options written or bought) counted as open-market buys and sells
+   WHERE: backend/src/smt/api/routers/tickers.py:124-141 (ranking), insiders.py stats/directory sums, feed.py today strip, ingest/quality.py (relative-price check skips derivatives). Evidence: GET /api/tickers?days=365&sort=sells puts CRWV first at $72,679,020,590; tx 19858 is 21,943 contracts at $438,860 = $9.63B with data_issues={}
+   FIX: Add AND NOT t.is_derivative to every open-market count and sum (ticker index, ticker profile, person stats, directory, today strip, feed min-size ranking), or report derivative P/S as a separate figure. Extend the value-plausibility checks to derivative rows using an underlying-price yardstick. Add a golden test using the CRWV Magnetar rows.
+
+#2 [blocker] 4/A amendments that fail to pair or link leave both the original and the amended rows current, so they are double counted
+   WHERE: backend/src/smt/ingest/ownership.py:467-514 (_apply_amendment). Evidence: FITB original 0000035527-26-000043 tx 111001/111003 is_current=t alongside 4/A 0000035527-26-000186 tx 1558-1560 (review_note 'both kept'); /api/people/mitchell-stuart-feiger-1244422 sell_value $9,689,487.63; the critics measured about $1.8B of duplicated P/S DB-wide
+   FIX: Add pairing tie-breakers (exact shares, then shares plus price), and treat a whole-filing restatement as superseding every original row. Pair by row content across all candidate originals when the original is ambiguous. If pairing still fails, follow PLAN §6.3: mark the unmatched ORIGINAL rows not current and add a 'needs review' note, or keep the amendment rows out of aggregates. Never leave both current. Make re-loading a 4/A idempotent: treat originals already superseded by this amendment as matched, and deduplicate quarantine inserts with ON CONFLICT DO NOTHING. Tighten the step-2 title+code-only fallback with date and size tolerances. Add golden tests for FITB and the GHM re-load.
+
+#3 [blocker] The same economic trade reported in several filings (a fund and its principal, or split groups) counts once per filing
+   WHERE: api/routers/tickers.py, insiders.py, feed.py today strip. Evidence: ETRA tx 205/207 (0000947871-26-000880) and 180/182 (-000881) are identical 333,333 and 1,000,000 sh at $15, so ETRA shows $40M where the real figure is $20M. The Blackstone $5M buy appears twice in /api/feed/today (tx 251443 and 251445), and Medline is counted 4x
+   FIX: Cluster rows across filings that share issuer, trade date, code, table, title, shares and price, are filed within about 2 business days, and are linked by an indirect row, an affiliated owner or the same filer-agent prefix. Count each cluster once in rankings, totals and the Today strip, label it 'reported in N filings', and still list it on each owner's page. This keeps the 'nothing counts twice' promise in the ranking docstring.
+
+#4 [blocker] Implausible values from ADS/ordinary share-ratio mismatches are not flagged and top the rankings
+   WHERE: backend/src/smt/ingest/quality.py row_issues. Evidence: SVRE tx 84946, 2,501,582,400 'Ordinary Shares' x $3.45 = $8,630,459,280 with data_issues={}; SVRE ranks with a buy_value of $26.7B
+   FIX: Flag value_implausible when a price footnote mentions ADS/'American Depositary' and the title is ordinary shares, when shares exceed shares outstanding (Form 144 units_outstanding or issuer data), or when the value exceeds a market-cap bound. Keep the value as filed but out of the sums.
+
+#5 [blocker] Real insiders shown under trust or LLC names taken from Form 144 free text; names never corrected
+   WHERE: backend/src/smt/ingest/form144.py:52; ingest/entities.py:68-108. Evidence: entity 8286 'THE COLGROVE FAM CHARITABLE REM TRU/A DTD 04/05/2024' (kind company, although the Form 4 raw name is Colgrove John), and 8252 'OMNADORA CAPITAL LLC' (fund) whose /api/people summary reads 'is a Director of CoreWeave' with the role 'CEO and President'
+   FIX: Never name a filer-CIK entity from the Form 144 account-holder field. Use the EDGAR conformed name, or tag the entity name_unverified regardless of kind. Let rename_from_conformed also correct kind. Re-run over the existing form144_filer entities.
+
+#6 [major] Wrong ticker on trades: placeholder symbols and cross-issuer security links
+   WHERE: backend/src/smt/ingest/entities.py:135-149 ensure_issuer_security; sources/forms/ownership.py _NO_TICKER. Evidence: security 'NA' (Nano Labs) carries current rows from 8 issuers (VineBrook Homes and others); 600+ current rows point at another issuer's security
+   FIX: Treat NA, [NONE], N.A., '-', '.' and similar as placeholders. Accept a ticker match only when securities.issuer_entity_id is null or equals the row's issuer (or the CIK matches company_tickers). Run a repair job that re-points the mismatched rows, and add a unit test.
+
+#7 [major] Live feed shows stale, often reversed owner names and old slugs
+   WHERE: ingest/ownership.py:367 payload freeze; web/src/components/live/feedRow.ts. Evidence: 102 of 608 live feed_events have payload owner name different from entities.name (e.g. 'Privitera Salvatore' vs 'Salvatore Privitera')
+   FIX: When serving /api/feed, /api/feed/today and SSE replay, join entities on feed_events.entity_id and take the current name and slug. Or rewrite payload.owner whenever an entity is renamed. Add a test that a rename shows up in the feed.
+
+#8 [major] People classified as companies because of short legal-suffix tokens (DE, SA, CO…)
+   WHERE: backend/src/smt/domain/names.py:15-19 _ORG_MARKERS; ingest/entities.py:76. Evidence: 'DE LA VEGA RAFAEL' (49847) and 'ERROL B DE SOUZA' (8164) are kind=company; the data critic counted about 336 such entities
+   FIX: Treat short tokens (DE/SE/SA/AG/CO/NV/BV) as org markers only at the end of the name or after a comma or punctuation, require strong markers (LLC, L.P., INC, CORP, LTD, TRUST, FUND, a digit) otherwise, and reclassify the existing entities.
+
+#9 [major] July–mid-September 2026 filings are missing, with no gap-fill, no new-quarter load job, and no disclosure; the 30/90-day windows imply complete data
+   WHERE: backend/src/smt/sources/edgar/backfill.py quarters_to_load; the filings table has zero rows for Jul/Aug and September only from the 21st; /tickers renders 'Trades from Aug 26, 2026 to Sep 24, 2026'; /methodology and /status do not mention the gap. PROGRESS P1.6 claims 'gap detection', but grep finds none in sources/edgar/jobs.py
+   FIX: Add a daily-index gap-fill job (backfill priority, live=False) from the end of the last data-set quarter to the first live-polled day, plus a scheduled load of each newly published quarterly data set. Record date coverage and show it on /status. Until coverage is complete, annotate or clamp the ranking and profile windows. Implement the PLAN §643 gap detection, or untick P1.6.
+
+#10 [major] Profile summary sentence is broken or misleading
+   WHERE: backend/src/smt/api/routers/insiders.py:129-176 _summary. Evidence: /api/people/timothy-d-cook-1214156 reads 'Timothy D Cook is a Director of NIKE, Inc.. …' (Apple CEO role not chosen, double period); others read 'a See Remarks of ONEOK INC /NEW/' and 'a CHIEF FINANCIAL OFFICER'; 'since 2026' reflects only the local history
+   FIX: Rank roles officer (CEO/CFO first) > director > 10% owner > other, then by activity, and join titles. Map 'See Remarks' and empty titles to the role type, title-case all-caps titles, clean org names (/NEW/), and don't add a period after 'Inc.'. Drop 'since {year}' or use the insider-since date. Add golden tests.
+
+#11 [major] Form 144 to Form 4 matching reuses one sale for several notices, including superseded ones
+   WHERE: backend/src/smt/ingest/form144.py:177-204 match_planned_sale. Evidence: transaction_id 394, 251141 and 251337 are each matched to 2 notices; some matched_shares exceed the planned shares; /api/feed/today planned_sales counts 144/A filings
+   FIX: Allocate exclusively and greedily by |traded_on - approx_sale_on|, skip superseded notices, cap matched_shares at the planned amount, and clear old matches before re-matching. Count only current notices in the Today strip.
+
+#12 [major] Quick look is not accessible: focus is lost on close, the Live grid hijacks keys from in-row links, rows add dozens of tab stops, and focus is hidden under the sticky bars
+   WHERE: web/src/components/drawer/QuickLook.tsx:59-67, LiveView.tsx EventSheet, CommandPalette.tsx (no trigger, so focus goes to <body> on close); FeedTable.tsx:94-109 (onKeyDown has no target check: Enter on a person link opens a different trade), :188-209 (in-row links and buttons are tab stops inside a single-tab-stop grid, so the watchlist and footer can't be reached with Tab); no scrollPaddingStart or scroll-padding-top for the sticky filter bar and header
+   FIX: Record the opener and restore focus in onCloseAutoFocus, with the grid as the Live fallback. Return early in onKeyDown when event.target !== event.currentTarget. Set tabIndex={-1} on in-row controls and add a skip link or move the watchlist before the grid in the DOM. Pass scrollPaddingStart equal to the sticky heights, set html scroll-padding-top, and re-measure scrollMargin with a ResizeObserver.
+
+#13 [major] Nested <button>s in the ticker page's phone trade rows break the DOM and the tap targets
+   WHERE: web/src/components/tickers/InsiderTrades.tsx:248-254 (row <button> contains <Action>, which renders the CodeTag <button> at :49)
+   FIX: On phones, render the code as plain text (as TradesPanel does), with Action interactive={false} or a PhoneAction component. Keep CodeTag in the desktop table only.
+
+#14 [major] The connection status live region announces every second
+   WHERE: web/src/components/live/LiveView.tsx:82-100 (a <p aria-live='polite'> containing 'updated {ago}' that re-renders every 1 s)
+   FIX: Remove aria-live from the <p>. Add an sr-only role=status span that changes only when the connection state changes.
+
+#15 [major] Quick look history and routing: every open and close is a full server render, close pushes history, and relative ?trade= links drop filters
+   WHERE: QuickLook.tsx:29-33 and :51-56 (router.push on open and close, on force-dynamic pages); TodayStrip.tsx:60 and QuickLook.tsx:132 (href='?trade=N' replaces the whole query)
+   FIX: Use window.history.pushState on open (shallow, no RSC request), and history.back() on close when the drawer was opened in-app (flag it in history.state), otherwise replaceState. Build the Today-strip and superseded_by hrefs from the current params with a shared useTradeHref helper. Wrap useOpenTrade in useCallback.
+
+#16 [major] Form 144 and Form 3 Live rows open a local-state sheet that ignores the URL, Back and sharing, and lacks key facts
+   WHERE: web/src/components/live/LiveView.tsx:192-274 EventSheet, :430-433; about half of the default Live rows are planned_sale or insider_holding events
+   FIX: Drive these events from the URL too (?event=<feed id> or ?notice=<id>) inside the same QuickLook. For Form 144, show filed/accepted time, relationship, planned shares, value and date, and the match status. For Form 3, show the listed holdings.
+
+#17 [major] Internal identifiers exposed in the UI
+   WHERE: QuickLook.tsx:194 prints t.deadline_rule raw ('form4_2bd'); web/src/components/status/jobs.ts lacks JOB_INFO for edgar.expire_planned_sales, edgar.refresh_submissions, verify_names, prices.refresh_daily, quality.flag_transactions and worker.watchdog, and Status prints raw key:value stats and 'not_modified'
+   FIX: Use lateRuleText() for the deadline rule, saying 'approximate' for deemed dates. Add plain names, descriptions and schedules for every job, and turn run summaries into sentences.
+
+#18 [major] The spot check covers only Form 4, although the spec asks for 20 random rows per source
+   WHERE: GET /api/status/spot-check?limit=50 returns 50/50 form_type '4'; /status shows '10 transactions'; SPEC.md:365, PLAN.md:1347 done criterion
+   FIX: Sample 20 Form 3/4/5 transactions and 20 Form 144 notices per draw, each beside its filing link, with a redraw button for each.
+
+#19 [major] Scheduler leases are never released on restart, which blacks out live polling for up to one lease period
+   WHERE: backend/src/smt/worker/scheduler.py:169-181 (_try_lease only takes expired leases); in the observed case poll_ownership could not run for about 11 minutes after a worker restart
+   FIX: Keep short leases renewed by a heartbeat while the job runs. On register, free leases held by this host with a different pid (or by dead workers). Accept leases held by self.me when the job isn't running. Add a crash-mid-run integration test.
+
+#20 [major] Failed queue items are never retried, so filings missed during an SEC outage are lost
+   WHERE: backend/src/smt/sources/edgar/pipeline.py:83 enqueue ON CONFLICT DO NOTHING, used by reconciliation; a failed item stays failed after 6 attempts, and there is no retry CLI
+   FIX: In reconciliation, upsert and reset failed items to pending. Don't let throttling or 5xx responses use up attempts (or retry slowly for days). Add `smt queue retry`. Have the watchdog report every failed item, and quarantine the missing-XML case.
+
+#21 [major] `reprocess` is missing, although the spec, plan and docs promise it (raw-first resilience)
+   WHERE: backend/src/smt/cli.py:79-98 (subcommands: migrate, api, worker, jobs, run-job, backfill); SPEC.md:200,209; PLAN.md:438,1460; docstrings in db/models/documents.py:5 and sources/forms/types.py:5; ADMIN_TOKEN is never read
+   FIX: Implement `smt reprocess [--parser] [--older-than VERSION] [--accession]`, which re-parses raw_documents with live=False and relies on the 4/A idempotency fix from item 2, and add scripts/reprocess.ps1. Otherwise remove the claims from the docs.
+
+#22 [major] The Phase 1 live-latency target (Form 4 on Live within 2 min, p95) is not met
+   WHERE: backend/src/smt/worker/jobs.py (EdgarHours 60 s) and sources/edgar/jobs.py _poll, which fetches 3 feeds and drains up to 100 items inline; measured hourly p95 is 138-216 s even with no outage
+   FIX: Poll the Form 4 feed every 15-20 s during filing hours and the other forms less often. Hand discovered items to a dedicated LIVE-lane processor. Stop process_queue from stealing freshly discovered live items. Report outage periods separately on /status.
+
+#23 [major] State indicators have too little contrast: the active grid row and the selected segment
+   WHERE: FeedTable.tsx:153 (bg-raised only), the Segmented controls in LiveView.tsx:61, people/controls.tsx:61 and tickers/controls.tsx:98; raised on night is 1.47:1 and raised on console is 1.14:1
+   FIX: Add an inset paper bar or outline to the active row, and a ring, underline or check mark to the selected segment, reaching at least 3:1.
+
+#24 [minor] Health checks never fail: /healthz returns 200 when the DB is down, and a dead worker goes unnoticed
+   WHERE: backend/src/smt/api/routers/health.py:21-28; the compose worker has no healthcheck
+   FIX: Return 503 when the DB is unreachable or the worker heartbeat or poll_ownership is stale during EDGAR hours. Add a worker healthcheck command.
+
+#25 [minor] Unknown ticker and person pages return HTTP 200 (a soft 404)
+   WHERE: curl http://localhost:3000/tickers/ZZZZZ and /people/nobody-1 both return 200, while /nope-404 returns 404
+   FIX: Resolve the entity before the loading.tsx streaming boundary (in a layout or generateMetadata), or drop loading.tsx for these routes, so notFound() sends a real 404.
+
+#26 [minor] Malformed cursors return 500
+   WHERE: backend/src/smt/api/cursor.py decode; GET /api/feed?cursor=base64('["notadate",1]') returns 500
+   FIX: Validate the element types and a non-negative offset inside decode and raise the existing 400 'Invalid cursor'. Extend the bad-cursor test.
+
+#27 [minor] The Today strip and Live rows disagree with Methodology and omit the late flag
+   WHERE: TodayStrip.tsx:45 slices 3 while Methodology says five; the feed payload has no is_late or deadline_rule; FeedTable.tsx shows only the delay
+   FIX: Align the count (show 5 or change the text). Add is_late and deadline_rule to the feed payload and show the Dim ⚑ late flag on Live rows.
+
+#28 [minor] Live SSR renders an empty 4000px virtualized body with no rows
+   WHERE: web/src/components/live/FeedTable.tsx:78-138 (useWindowVirtualizer without initialRect)
+   FIX: Pass initialRect and initialOffset, or render the first ~25 rows statically until the virtualizer has measured.
+
+#29 [minor] Name hygiene: a trailing 'V' becomes a generational suffix, and '/CA/', '(nmn)' and misplaced 'Ph. D.' stay in names
+   WHERE: backend/src/smt/domain/names.py:26,72; e.g. 'David Singer V', 'Rui (nmn) Zhu', 'Chris Ph. D. Diorio'
+   FIX: Treat a lone V as a middle initial unless the context shows a suffix. Strip /XX/ state codes and '(nmn)', and move degree suffixes to the end of the display name.
+
+#30 [minor] Design fidelity: eyebrow headings, a Beacon late chip, '·' metadata strings, ↗ inside link text and mixed sort glyphs
+   WHERE: QuickLook.tsx:142,179,199,238 (uppercase tracking-wide) and :189 (beacon chip); ProfileHeader.tsx:64,121-132; FeedTable.tsx:198; DirectoryView.tsx:381
+   FIX: Use sentence-case section labels, reuse the LateFlag component (Dim ⚑), use sentence punctuation instead of '·', put external-link icons outside the link text, and use one sort glyph everywhere.
+
+#31 [minor] Live controls are below the 44 px phone target, and there are three diverging Segmented implementations (the Live one has no roving tabindex)
+   WHERE: LiveView.tsx:38-60,133,320,511; WatchButton.tsx:14; CommandPalette.tsx:185
+   FIX: Move one shared Segmented (roving tabindex, arrow/Home/End keys, h-11 md:h-8) and one useIsPhone hook into components/ui and lib, and apply 44 px phone sizes to the Live controls.
+
+#32 [minor] Performance: the directory aggregates the full transactions table per request, and the feed has no partial index on is_live
+   WHERE: backend/src/smt/api/routers/insiders.py:87-109 (about 376 ms, over the 300 ms budget, OFFSET paging); db/models/ops.py feed_events
+   FIX: Materialize per-entity stats with keyset paging. Add CREATE INDEX ... ON feed_events (detected_at DESC, id DESC) WHERE is_live.
+
+#33 [minor] Smaller a11y, ops and engineering polish
+   WHERE: CommandPalette.tsx:66 (bare '/' shortcut, WCAG 2.1.4) and :124 (outline-none); WatchlistView.tsx:134 (label-in-name); FeedTable.tsx:147 (aria-selected on every row); LiveView.tsx:422 (smooth scroll ignores reduced motion); CodeTag click bubbles to the row; stream.py _publish (a dropped slow SSE client is never closed); the middleware rate limit keys on the SSR host; the SEC bucket burst of 8; compose lacks APPRISE_URLS; no .dockerignore; unused clsx and lightweight-charts; the Status 'Connecting' pulse and the missing reduced-motion 'New' marker
+   FIX: Address each as listed by the critics: skip '/' in selects and comboboxes or let users turn it off; add a visible focus ring; name the button 'Remove X'; drop aria-selected; honour prefers-reduced-motion in JS scroll; stopPropagation in CodeTag; close overflowed SSE generators; forward the visitor IP from SSR; lower the SEC burst to 1-2; pass APPRISE_URLS; add a .dockerignore; remove the unused dependencies; add the motion fallbacks.
+
+#34 [minor] Docs and progress claims don't match the code
+   WHERE: PROGRESS.md P1.6 ('gap detection'; none in sources/edgar/jobs.py); CLAUDE.md:90 (routers mount automatically, but app.py has a hard-coded list); .env.example ADMIN_TOKEN 'for backfill/reprocess endpoints'; the deemed-date 3-business-day cap is not implemented
+   FIX: Correct the docs or implement the features, and add the deemed-date golden test plus poller and reconciler integration tests.
+
+REJECTED:
+  - Backend's 'data hole is a blocker': downgraded to major (rank 9). The owner chose to load only 2 quarters locally, so the Jul–Sep hole is partly a local artefact. The real defects are the missing gap-fill and new-quarter jobs and the missing disclosure on the window labels.
+  - Product's 'People search placeholder says funds' and the missing role in search sublabels: very minor copy points left out of the must-fix list. Funds do exist as reporting-owner entities (e.g. OMNADORA CAPITAL LLC, ORBIMED ADVISORS LLC), so 'funds' isn't false.
+  - Frontend's 'aria-pressed with a changing label on chart toggles' and the memoization/FeedPayload cast remarks: real but cosmetic engineering notes, folded into polish item 33 rather than listed separately.
+  - Product's 'ticker trades table lacks a role column / chart shows empty months before 2026': mostly a result of the owner's 2-quarter history decision. The disclosure part is covered by item 9. The role column is a nice-to-have, not a Phase 1 requirement.
+  - Profile footer range and 10b5-1 wording nits (bin-william-li): minor copy, covered in spirit by the summary fix (item 10) and not separately verified as material.
+  - Line references in the critics' scheduler finding (scheduler.py:273-386) don't match the current file, where the lease logic is at :169-181. I re-verified the behaviour at the correct lines and kept the finding (item 19) with the corrected location.
+  - Critics' prices-related remarks (price job 836 of 978 targets unavailable): prices are private-only by owner decision. Staleness alerting is folded into the ops polish item, not treated as a public-data defect.

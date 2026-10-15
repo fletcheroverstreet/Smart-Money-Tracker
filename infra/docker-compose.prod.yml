@@ -1,0 +1,20 @@
+# Production: same services, prebuilt images from GitHub Container Registry.
+# Usage on the server:  docker compose -f infra/docker-compose.yml -f infra/docker-compose.prod.yml up -d
+# Set IMAGE_OWNER (your GitHub user) and SITE_ADDRESS (your domain) in the server's .env.
+services:
+  migrate:
+    image: ghcr.io/${IMAGE_OWNER:?set IMAGE_OWNER}/smt-backend:${IMAGE_TAG:-latest}
+    build: !reset null
+  api:
+    image: ghcr.io/${IMAGE_OWNER}/smt-backend:${IMAGE_TAG:-latest}
+    build: !reset null
+    environment:
+      ENVIRONMENT: production
+  worker:
+    image: ghcr.io/${IMAGE_OWNER}/smt-backend:${IMAGE_TAG:-latest}
+    build: !reset null
+    environment:
+      ENVIRONMENT: production
+  web:
+    image: ghcr.io/${IMAGE_OWNER}/smt-web:${IMAGE_TAG:-latest}
+    build: !reset null

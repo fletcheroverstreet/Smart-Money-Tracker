@@ -1,0 +1,61 @@
+# Fallback sector labels from SEC SIC codes, used only when a ticker is not in
+# industry_map.csv (the hand-curated map copied from lodestar; its DEC-009).
+#
+# SIC is a 1987 taxonomy, so these are broad, honest approximations: every
+# label derived here is stored with sector_source = "sic" and shown as such.
+# Rules are checked top to bottom; the first range containing the code wins,
+# so narrow ranges come before the broad division they belong to.
+# Sector names match the 11 broad names used in industry_map.csv.
+
+rules:
+  # --- narrow exceptions first
+  - {from: 2830, to: 2836, sector: Health Care}            # pharmaceuticals, biologics
+  - {from: 2840, to: 2844, sector: Consumer Staples}       # soaps, cosmetics
+  - {from: 3570, to: 3579, sector: Information Technology} # computers, office machines
+  - {from: 3711, to: 3711, sector: Consumer Discretionary} # motor vehicles
+  - {from: 3714, to: 3714, sector: Consumer Discretionary} # motor vehicle parts
+  - {from: 3820, to: 3829, sector: Information Technology} # measuring instruments
+  - {from: 3840, to: 3851, sector: Health Care}            # medical instruments, ophthalmic
+  - {from: 5120, to: 5122, sector: Health Care}            # drug wholesale
+  - {from: 5400, to: 5499, sector: Consumer Staples}       # food stores
+  - {from: 5912, to: 5912, sector: Consumer Staples}       # drug stores
+  - {from: 6500, to: 6553, sector: Real Estate}            # real estate
+  - {from: 6798, to: 6798, sector: Real Estate}            # REITs
+  - {from: 7370, to: 7379, sector: Information Technology} # software, computer services
+  - {from: 7800, to: 7899, sector: Communication Services} # motion pictures
+  # --- broad divisions
+  - {from: 100, to: 999, sector: Consumer Staples}         # agriculture
+  - {from: 1000, to: 1099, sector: Materials}              # metal mining
+  - {from: 1200, to: 1399, sector: Energy}                 # coal, oil & gas extraction
+  - {from: 1400, to: 1499, sector: Materials}              # nonmetallic minerals
+  - {from: 1500, to: 1799, sector: Industrials}            # construction
+  - {from: 2000, to: 2199, sector: Consumer Staples}       # food, tobacco
+  - {from: 2200, to: 2399, sector: Consumer Discretionary} # textiles, apparel
+  - {from: 2400, to: 2499, sector: Materials}              # lumber
+  - {from: 2500, to: 2599, sector: Consumer Discretionary} # furniture
+  - {from: 2600, to: 2699, sector: Materials}              # paper
+  - {from: 2700, to: 2799, sector: Communication Services} # printing, publishing
+  - {from: 2800, to: 2899, sector: Materials}              # chemicals
+  - {from: 2900, to: 2999, sector: Energy}                 # petroleum refining
+  - {from: 3000, to: 3099, sector: Materials}              # rubber, plastics
+  - {from: 3100, to: 3199, sector: Consumer Discretionary} # leather
+  - {from: 3200, to: 3399, sector: Materials}              # stone, glass, primary metals
+  - {from: 3400, to: 3599, sector: Industrials}            # fabricated metal, machinery
+  - {from: 3600, to: 3699, sector: Information Technology} # electronic equipment
+  - {from: 3700, to: 3799, sector: Industrials}            # transportation equipment
+  - {from: 3800, to: 3899, sector: Information Technology} # instruments (remainder)
+  - {from: 3900, to: 3999, sector: Consumer Discretionary} # misc manufacturing
+  - {from: 4000, to: 4799, sector: Industrials}            # transportation
+  - {from: 4800, to: 4899, sector: Communication Services} # communications
+  - {from: 4900, to: 4999, sector: Utilities}              # electric, gas, water
+  - {from: 5000, to: 5099, sector: Industrials}            # durable goods wholesale
+  - {from: 5100, to: 5199, sector: Consumer Staples}       # nondurable goods wholesale
+  - {from: 5200, to: 5999, sector: Consumer Discretionary} # retail
+  - {from: 6000, to: 6799, sector: Financials}             # banks, insurance, brokers
+  - {from: 7000, to: 7299, sector: Consumer Discretionary} # hotels, personal services
+  - {from: 7300, to: 7399, sector: Industrials}            # business services (remainder)
+  - {from: 7500, to: 7599, sector: Consumer Discretionary} # auto repair
+  - {from: 7900, to: 7999, sector: Consumer Discretionary} # amusement, recreation
+  - {from: 8000, to: 8099, sector: Health Care}            # health services
+  - {from: 8200, to: 8299, sector: Consumer Discretionary} # education
+  - {from: 8700, to: 8799, sector: Industrials}            # engineering, research, management

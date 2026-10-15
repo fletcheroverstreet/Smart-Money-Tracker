@@ -1,0 +1,47 @@
+# Reverse proxy. In production set SITE_ADDRESS to your domain (e.g. example.com)
+# and Caddy obtains HTTPS certificates automatically.
+#
+# Who the visitor is (for the API's per-visitor rate limit). Every reverse_proxy
+# below sends the upstream an X-Forwarded-For header holding the address of the
+# client connected to Caddy. No trusted_proxies option is set, so Caddy drops any
+# X-Forwarded-For the visitor sent and writes only the real connecting address;
+# a visitor can't pick their own rate-limit bucket. Then:
+#   * /api/* goes to the API, which reads the visitor from that header because
+#     the connection comes from Caddy's private Docker address
+#     (backend/src/smt/api/middleware.py);
+#   * pages go to the Next.js server, which passes the same address on to the
+#     API with each request it makes while rendering (web/src/lib/api/server.ts).
+# If Caddy is ever put behind a CDN or load balancer, list that proxy's
+# addresses under `servers { trusted_proxies static ... }` in the global
+# options, or every visitor will share the CDN's address.
+{$SITE_ADDRESS::80} {
+	# The live stream: no compression and no buffering. Caddy streams
+	# text/event-stream immediately; `encode` would gzip it, so it is kept out.
+	handle /api/stream* {
+		reverse_proxy api:8000 {
+			flush_interval -1
+		}
+	}
+
+	handle /api/* {
+		encode zstd gzip
+		reverse_proxy api:8000
+	}
+
+	handle /healthz {
+		reverse_proxy api:8000
+	}
+
+	handle {
+		encode zstd gzip
+		reverse_proxy web:3000
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		X-Frame-Options DENY
+		-Server
+	}
+}

@@ -1,0 +1,66 @@
+<!doctype html>
+<!-- The README banner (1280 x 320 CSS px, rendered at 2x). ?social renders the 1280 x 640
+     GitHub social preview instead. The rows are real filings from the Live page, 2026-10-14. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="tokens.css">
+<style>
+  body { width: 1280px; height: 320px; overflow: hidden; }
+  body.social { height: 640px; }
+  .wrap { position: relative; height: 100%; display: flex; align-items: center; gap: 56px; padding: 0 64px 0 136px;
+          background:
+            linear-gradient(90deg, rgb(255 255 255 / 0) 0%, var(--page) 70%),
+            repeating-linear-gradient(0deg, var(--console) 0 1px, transparent 1px 32px),
+            repeating-linear-gradient(90deg, var(--console) 0 1px, transparent 1px 32px),
+            var(--page); }
+  .social .wrap { flex-direction: column; justify-content: center; align-items: flex-start; gap: 40px; }
+  .left { flex: 1; min-width: 0; }
+  .word { margin-top: 14px; font-family: var(--display); font-weight: 600; font-size: 58px; line-height: 1;
+          white-space: nowrap; color: var(--ink); }
+  .word .mark { color: var(--inflow); font-size: 38px; }
+  .tag { margin-top: 18px; max-width: 520px; font-size: 19px; line-height: 28px; color: var(--dim); }
+  .tag b { color: var(--ink); font-weight: 600; }
+  .feed { width: 480px; overflow: hidden; background: var(--page); box-shadow: var(--shadow); }
+  .social .feed { width: 760px; }
+  .feed-head { display: flex; justify-content: space-between; align-items: center; padding: 12px 18px;
+               background: var(--raised); border-bottom: 1px solid var(--hairline); }
+  .live { display: inline-flex; align-items: center; gap: 8px; font-family: var(--display); font-weight: 600;
+          font-size: 17px; color: var(--ink); }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--inflow-mark); box-shadow: 0 0 0 4px rgb(20 149 138 / 0.18); }
+  .row { display: grid; grid-template-columns: 112px 56px 1fr auto; align-items: center; gap: 10px;
+         padding: 9px 18px; border-bottom: 1px solid var(--hairline); font-size: 14px; }
+  .act { font-weight: 500; }
+  .tick { font-family: var(--mono); font-weight: 500; font-size: 13px; color: var(--ink); }
+  .who { color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .val { font-weight: 600; text-align: right; }
+  .foot { padding: 9px 18px; font-size: 12px; color: var(--dim); background: var(--console); }
+  .foot b { color: var(--inflow); font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="rail"><span class="logo">◎</span>SMT</div>
+  <div class="left">
+    <p class="eyebrow">SEC Forms 3 · 4 · 5 · 144 &nbsp;—&nbsp; live</p>
+    <h1 class="word">Smart Money Tracker</h1>
+    <p class="tag">What insiders buy and sell, on screen about a minute after the SEC publishes it,
+      <b>with every number traced back to its filing.</b></p>
+  </div>
+  <div class="feed card">
+    <div class="feed-head">
+      <span class="live"><span class="dot"></span>Live</span>
+      <span class="eyebrow" style="font-size:11px">Oct 14, 2026</span>
+    </div>
+    <div class="row"><span class="act in">▲ Buy</span><span class="tick">TDIC</span><span class="who">Wai Yue Seto, CEO</span><span class="val in num">+$600k</span></div>
+    <div class="row"><span class="act out">▼ Sell</span><span class="tick">AFL</span><span class="who">Japan Post Holdings, 10% owner</span><span class="val out num">−$1.4M</span></div>
+    <div class="row"><span class="act in">▲ Buy</span><span class="tick">IMSR</span><span class="who">Simon Irish, CEO</span><span class="val in num">+$51k</span></div>
+    <div class="row"><span class="act dim">○ Plans to sell</span><span class="tick">FERG</span><span class="who">Kevin Michael Murphy, Director</span><span class="val dim num">~$151k</span></div>
+    <div class="foot">Form 4s on screen: <b>95% within 52 s</b> of EDGAR (212 filings, Oct 13)</div>
+  </div>
+</div>
+<script>
+  if (new URLSearchParams(location.search).has("social")) document.body.classList.add("social");
+</script>
+</body>
+</html>

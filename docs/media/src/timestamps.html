@@ -1,0 +1,99 @@
+<!doctype html>
+<!-- "Three timestamps" (1280 x 560 CSS px). ?step=0..4 draws one frame of the animation;
+     render.py turns the steps into docs/media/timestamps.gif. The trade is real: Huan Liu's
+     purchase of 100,000 CTNT at $3.30 on 2026-10-09, Form 4 0001104659-26-115608, accepted by
+     EDGAR 2026-10-13 7:18:26 PM ET and on this site 33 s later. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="tokens.css">
+<style>
+  body { width: 1280px; height: 560px; overflow: hidden; }
+  .wrap { position: relative; height: 100%; padding: 44px 64px 44px 136px; background: var(--page); }
+  h1 { margin-top: 10px; font-family: var(--display); font-weight: 600; font-size: 42px; line-height: 46px; }
+  .sub { margin-top: 8px; font-size: 18px; color: var(--dim); }
+  .axis { position: absolute; left: 168px; right: 96px; top: 268px; height: 2px; background: var(--hairline); }
+  .lag { position: absolute; top: 262px; left: 168px; height: 14px; width: 0; border-radius: 7px;
+         background: repeating-linear-gradient(135deg, var(--raised) 0 8px, var(--hairline) 8px 16px); border: 1px solid var(--hairline); }
+  .m { position: absolute; top: 254px; width: 30px; height: 30px; margin-left: -15px; border-radius: 50%;
+       border: 2px solid var(--ink); background: var(--page); display: grid; place-items: center;
+       font-size: 13px; font-weight: 600; }
+  .m.t { left: 168px; border-color: var(--inflow); color: var(--inflow); }
+  .m.d { left: 900px; border-color: var(--blue); color: var(--blue); }
+  .lab { position: absolute; width: 300px; }
+  .lab .k { font-family: var(--mono); font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; }
+  .lab .when { margin-top: 4px; font-family: var(--display); font-weight: 600; font-size: 24px; color: var(--ink) !important; }
+  .lab p { margin-top: 4px; font-size: 14px; line-height: 20px; color: var(--dim); }
+  .lab.t { left: 144px; top: 150px; }
+  .lab.d { left: 740px; top: 150px; width: 330px; }
+  .bracket { position: absolute; top: 300px; left: 168px; width: 732px; text-align: center; font-family: var(--mono);
+             font-size: 13px; color: var(--dim); }
+  .bracket::before { content: ""; display: block; height: 10px; border: 1px solid var(--rule); border-top: 0; margin-bottom: 8px; }
+  .zoom { position: absolute; left: 740px; top: 350px; width: 444px; padding: 14px 18px 18px; background: var(--page); box-shadow: var(--shadow); }
+  .zoom .k { font-family: var(--mono); font-size: 11px; letter-spacing: 0.16em; color: var(--dim); text-transform: uppercase; }
+  .ztrack { position: relative; margin: 44px 8px 18px; height: 2px; background: var(--hairline); }
+  .zbar { position: absolute; left: 0; top: -5px; height: 12px; width: 0; border-radius: 6px; background: var(--inflow-mark); }
+  .zm { position: absolute; top: -9px; width: 20px; height: 20px; margin-left: -10px; border-radius: 50%; border: 2px solid; background: var(--page); }
+  .zm.a { left: 0; border-color: var(--blue); }
+  .zm.b { left: 100%; border-color: var(--inflow); }
+  .ztime { position: absolute; top: 18px; font-family: var(--mono); font-size: 12px; color: var(--dim); white-space: nowrap; }
+  .ztime.a { left: -6px; }
+  .ztime.b { right: -6px; color: var(--ink); }
+  .zcap { position: absolute; top: -40px; left: 0; right: 0; text-align: center; font-family: var(--display); font-weight: 600;
+          font-size: 22px; color: var(--inflow); }
+  .end { position: absolute; left: 136px; bottom: 40px; font-size: 16px; color: var(--ink); }
+  .end b { color: var(--inflow); font-weight: 600; }
+  .hide { visibility: hidden; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="rail"><span class="logo">◎</span>SMT</div>
+  <p class="eyebrow">The one idea</p>
+  <h1>Prices can be live. Disclosures can’t.</h1>
+  <p class="sub">So every trade shows three times, and how far apart they are.</p>
+
+  <div class="axis"></div>
+  <div class="lag" id="lag"></div>
+
+  <div class="m t" id="mt">▲</div>
+  <div class="lab t" id="lt">
+    <p class="k in">1 · Traded</p>
+    <p class="when num">Fri, Oct 9, 2026</p>
+    <p>Huan Liu buys 100,000 CTNT at $3.30, $330k on the open market</p>
+  </div>
+
+  <div class="m d" id="md" style="font-size:11px">F4</div>
+  <div class="lab d" id="ld">
+    <p class="k" style="color: var(--blue)">2 · Disclosed</p>
+    <p class="when num">Tue, Oct 13, 7:18:26 PM ET</p>
+    <p>EDGAR accepts the Form 4: on time, the law allows two business days</p>
+  </div>
+  <div class="bracket" id="br">4 days: the law’s lag, the same for everyone</div>
+
+  <div class="card zoom" id="zoom">
+    <p class="k">3 · On this site</p>
+    <div class="ztrack">
+      <div class="zcap" id="zcap">33 s: our part</div>
+      <div class="zbar" id="zbar"></div>
+      <div class="zm a"></div><div class="zm b" id="zb"></div>
+      <span class="ztime a num">7:18:26 PM accepted</span>
+      <span class="ztime b num">7:18:58 PM on screen</span>
+    </div>
+  </div>
+
+  <p class="end" id="end">Every number links to the filing it came from. <b>A number the filing doesn’t give stays blank, never zero.</b></p>
+</div>
+<script>
+  // step 0: the question; 1: traded; 2: the legal lag; 3: on screen; 4: the whole picture.
+  const step = Number(new URLSearchParams(location.search).get("step") ?? 4);
+  const hide = (...ids) => ids.forEach((id) => document.getElementById(id).classList.add("hide"));
+  if (step < 1) hide("mt", "lt");
+  if (step < 2) hide("md", "ld", "br", "lag");
+  if (step < 3) hide("zoom");
+  if (step < 4) hide("end");
+  document.getElementById("lag").style.width = step >= 2 ? "732px" : "0";
+  document.getElementById("zbar").style.width = step >= 3 ? "100%" : "0";
+</script>
+</body>
+</html>

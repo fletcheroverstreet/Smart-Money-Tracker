@@ -1,0 +1,111 @@
+# Full stack for local use with Docker Desktop:  docker compose -f infra/docker-compose.yml up --build
+# Production uses docker-compose.prod.yml (prebuilt images from GHCR, nothing compiled on the server).
+name: smart-money-tracker
+
+x-backend-env: &backend-env
+  DATABASE_URL: postgresql+psycopg://smt:${POSTGRES_PASSWORD:-smt}@db:5432/smt
+  SEC_USER_AGENT: ${SEC_USER_AGENT:?set SEC_USER_AGENT (app name + contact email)}
+  SEC_RATE_LIMIT: ${SEC_RATE_LIMIT:-8}
+  RAW_STORE_DIR: /data/raw
+  ENVIRONMENT: ${ENVIRONMENT:-development}
+  ADMIN_TOKEN: ${ADMIN_TOKEN:-}
+  PRIVATE_MODE_PASSPHRASE: ${PRIVATE_MODE_PASSPHRASE:-}
+  SESSION_SECRET: ${SESSION_SECRET:-}
+  PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:-http://localhost}
+  # Watchdog alerts (Apprise URLs, comma separated); empty = log only.
+  APPRISE_URLS: ${APPRISE_URLS:-${ALERT_URLS:-}}
+  # Prices are private-mode only; yfinance joins only when private mode is configured.
+  PRICE_PROVIDERS: ${PRICE_PROVIDERS:-yfinance}
+
+services:
+  db:
+    image: postgres:18-trixie
+    environment:
+      POSTGRES_USER: smt
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-smt}
+      POSTGRES_DB: smt
+    volumes:
+      # Postgres 18 images keep data under /var/lib/postgresql/18/docker.
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U smt -d smt"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+    logging: &logging
+      driver: json-file
+      options: { max-size: "10m", max-file: "5" }
+
+  migrate:
+    build: { context: .., dockerfile: infra/backend.Dockerfile }
+    environment: *backend-env
+    command: ["smt", "migrate"]
+    depends_on: { db: { condition: service_healthy } }
+    restart: "no"
+    logging: *logging
+
+  api:
+    build: { context: .., dockerfile: infra/backend.Dockerfile }
+    environment: *backend-env
+    command: ["smt", "api", "--host", "0.0.0.0", "--port", "8000"]
+    depends_on:
+      db: { condition: service_healthy }
+      migrate: { condition: service_completed_successfully }
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://127.0.0.1:8000/healthz',timeout=3)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    logging: *logging
+
+  worker:
+    build: { context: .., dockerfile: infra/backend.Dockerfile }
+    environment: *backend-env
+    command: ["smt", "worker"]
+    # Unhealthy when the heartbeat is older than 5 minutes, or EDGAR polling stalls in filing hours.
+    healthcheck:
+      test: ["CMD", "smt", "worker-health"]
+      interval: 60s
+      timeout: 20s
+      retries: 3
+      start_period: 120s
+    volumes:
+      - rawstore:/data/raw
+    depends_on:
+      db: { condition: service_healthy }
+      migrate: { condition: service_completed_successfully }
+    restart: unless-stopped
+    logging: *logging
+
+  web:
+    build: { context: .., dockerfile: infra/web.Dockerfile }
+    environment:
+      API_INTERNAL_URL: http://api:8000
+      PORT: "3000"
+      HOSTNAME: 0.0.0.0
+    depends_on: { api: { condition: service_healthy } }
+    restart: unless-stopped
+    logging: *logging
+
+  caddy:
+    image: caddy:2.11-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:-:80}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on: [api, web]
+    restart: unless-stopped
+    logging: *logging
+
+volumes:
+  pgdata:
+  rawstore:
+  caddy_data:
+  caddy_config:

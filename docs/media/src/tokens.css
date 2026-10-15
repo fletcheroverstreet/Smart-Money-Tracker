@@ -1,0 +1,64 @@
+/* The README pictures' colours: the site's own light theme (web/src/app/globals.css):
+   white page, light grey panels, dark ink, and the navy of the side menu as the accent. */
+@import url("https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=block");
+
+:root {
+  --page: #ffffff;
+  --console: #f5f7fa;
+  --raised: #e9eef5;
+  --hairline: #dce2eb;
+  --rule: #7b869c;
+  --ink: #111a2e;
+  --dim: #535e74;
+  --inflow: #08756b;
+  --inflow-mark: #14958a;
+  --outflow: #ad4a0b;
+  --outflow-mark: #d9692a;
+  --beacon: #6b4a00;
+  --blue: #2f6fd6;
+  --navy: #152038;
+  --navy-raised: #1f2f50;
+  --navy-ink: #f1ede2;
+  --navy-dim: #94a1bb;
+  --shadow: 0 1px 2px rgb(17 26 46 / 0.06), 0 12px 32px rgb(17 26 46 / 0.12);
+  --display: "Barlow Semi Condensed", "Arial Narrow", sans-serif;
+  --sans: "IBM Plex Sans", "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", "Cascadia Mono", monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  background: var(--page);
+  color: var(--ink);
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+.eyebrow {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.card {
+  background: var(--console);
+  border: 1px solid var(--hairline);
+  border-radius: 10px;
+}
+
+/* The site's navy side menu, as a strip down the left edge of a picture. */
+.rail {
+  position: absolute; inset: 0 auto 0 0; width: 72px; background: var(--navy);
+  display: flex; flex-direction: column; align-items: center; padding-top: 22px; gap: 6px;
+  color: var(--navy-ink); font-family: var(--display); font-weight: 600; font-size: 15px; letter-spacing: 0.04em;
+}
+.rail .logo { color: var(--navy-dim); font-size: 18px; }
+
+.num { font-variant-numeric: tabular-nums lining-nums; }
+.in { color: var(--inflow); }
+.out { color: var(--outflow); }
+.dim { color: var(--dim); }
+.beacon { color: var(--beacon); }

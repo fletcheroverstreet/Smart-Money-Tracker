@@ -1,0 +1,12 @@
+# One-off days the SEC (and EDGAR) was closed that are NOT regular federal
+# holidays. Regular federal holidays come from the `holidays` package.
+# Filing deadlines that fall on these days move to the next business day.
+#
+# Add an entry whenever a national day of mourning or emergency closure is
+# declared. Each entry says why, so the list stays reviewable.
+
+sec_extra_closures:
+  - date: 2018-12-05
+    reason: National Day of Mourning for President George H. W. Bush (federal offices closed)
+  - date: 2025-01-09
+    reason: National Day of Mourning for President Jimmy Carter (federal offices closed)

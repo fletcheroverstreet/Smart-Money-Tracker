@@ -1,0 +1,188 @@
+=== product-frontend (round 5)  score 9
+Product, UX, accessibility and frontend lens, round 5. I judged HEAD 041cfc4 on the running system on Mon 2026-09-28 from 07:59 to about 08:10 ET, with 8 Form 4s already in today and live detection taking 29 to 69 s, apart from the first filing of the day at 275 s. Web typecheck and lint are clean. I worked in my own tab (tab-12; I closed the stale tab-2 to get under the tab cap).
+
+**The round-4 product findings are fixed or mostly fixed:**
+- **Currency:** UMC rows read '163.00 (filing's currency) | Other currency'. The quick look says 'This price isn't in dollars' and 'Value 1,630,000.00 in the filing's currency, not in dollar totals'.
+- **Roles:** Live, the Today strip, search and the directory all read 'Jennifer Jarrett, Director, President and CEO'.
+- **Rankings:** Securetech is flagged value_implausible and is off the 90-day buys ranking.
+- **Methodology:** it now describes both the public-float check and the class-history check.
+- **Copy:** Form 144 relationships read 'Director', 'Officer' and 'Other insider'. The Watchlist says only 'This list doesn't send alerts.' The trade-row count reads 3,049. A watchdog event that opened and cleared at once shows a single time ('At Sep 28, 8:01 AM ET').
+
+**Keyboard, screen reader and layout checks pass:**
+- **Ctrl+K fast typing:** 'united micro' and 'dageville' with Enter at once opened /tickers/UMC and Benoit Dageville's profile, with focus on MAIN#main.
+- **Live grid:** j j moves the active descendant, Enter opens ?trade=, and Esc returns focus to the grid.
+- **Size filter:** Right twice from 'Any' lands on $1M+ and sets ?min=1000000.
+- **Ticker table:** Enter on a table date opens the quick look with focus on its close button, and Esc returns focus to that date button.
+- **390 px:** none of the 16 routes I checked scrolls sideways.
+- **Console:** no hydration warnings. The only errors are 404s from the not-found pages I opened on purpose.
+
+**Environment note:** the pane was hidden. Full loads left streamed sections unhydrated (Live read 'Connecting', and ?trade= links didn't open), so I tested through client-side navigation, where everything worked. I didn't count this against the build.
+
+**What keeps it below 10 is a set of minor issues. The same number or name still reads differently in different places:**
+- A ticker's 90-day counts differ by a day between /tickers and the ticker page (UMC: 4 vs 5).
+- Company names are still ALL CAPS in the quick look and on profile tables.
+- Status reads the initial history load as filings the live feed missed.
+- Methodology misses the hourly index retry and contradicts itself on the fourth check.
+- Sources leaves out two SEC endpoints the site reads.
+- A small regression drops the board-director label for titles such as 'Director of Investor Relations'.
+
+-- round-4 items:
+  [FIXED] Foreign-currency price display (UMC '$163.00' and 'can't be right' under a 'not in dollars' box): /tickers/UMC table: 'Sell 10,000 163.00 (filing's currency) Other currency'. The quick look for ?trade=251829 (opened by keyboard) has a box titled 'This price isn't in dollars' with only the currency text; the value_implausible text is filtered out in DataIssueNotes. It then shows 'Value 1,630,000.00 in the filing's currency, not in dollar totals (see above)' and 'Price 163.00 (filing's currency)'. priceShown() is used in InsiderTrades, TradesPanel, SpotCheck and WatchlistView; phone rows show 'Other currency'. /api/tickers/UMC/events sends value null, so no dollar marker is drawn. Gap: no web component test was added for the UMC row, which round 4 asked for.
+  [FIXED] Duplicated Director roles ('Director, President and CEO, Director'): Live grid row and Today strip: 'Jennifer Jarrett, Director, President and CEO'. The same text comes from /api/search, /api/people/insiders?q=jarrett and the profile roles. relationship_role() skips the director label when the officer title matches \bdirector\b. There are unit tests. There is an edge regression, listed under findings.
+  [PARTLY] Methodology vs the value checks (public float, class history): Methodology 'Figures that can't be right' now has 'Third, a trade worth more than 10 times the company's whole public float ... refreshed every 90 days' and 'Fourth, a price of $1,000 or more that is over 1,000 times the same class's median price in the year before'. Both match quality.py (FLOAT_FACTOR=10, HISTORY_FACTOR=1000, _MIN_EXTERNAL_CHECK_PRICE). The lead-in still says 'Four more checks don't depend on those prices', but the fourth check is built on the class's own prices. Separately, the hourly daily-index retry isn't described (see findings). SCTH tx 282136 is now {value_implausible}, and the 90-day buys top 10 no longer lists it.
+  [PARTLY] Reconciliation 'Found by the check' (re-check erased the first check's misses): The count now comes from edgar_queue (discovered_via in daily_index or gap_fill), so a re-check no longer erases it: Sep 24 shows '432 | 13 | None'. But the gap-fill history load is counted as 'found by the check' too, and the lead says this 'counts filings the live feed hadn't picked up'. So Sep 14 to 18 read 818, 778, 790, 932 of 932 and 564 of 564 found. Those were queued by the gap filler before the live feed was running (edgar_queue: Sep 17 gap_fill=932, feed=0).
+  [PARTLY] Copy: company-name casing: Fixed: the ticker header, the tab title ('United Microelectronics Corp (UMC) · Smart Money Tracker'), the /tickers index and search. Not fixed: /api/trades/{id}, /api/people/{slug}/trades and /positions still send the raw EDGAR name. The quick look reads 'Company UNITED MICROELECTRONICS CORP (UMC)', and /api/trades/421 sends 'NVIDIA CORP' while /tickers/NVDA says 'Nvidia Corp'. Jen-Tsung Lin's profile table reads 'UMC, UNITED MICROELECTRONICS CORP' under a header that says 'United Microelectronics Corp'. 3,002 of 9,975 company entities are all capitals.
+  [FIXED] Copy: RSU exercise prices 'at $0.00': In QuickLook.tsx derivativeTerms, hasPrice now requires exercise_price > 0, so zero-priced units no longer print 'at $0.00'. Checked in code; the Form 3 drawer from a shared link can't open in the hidden pane.
+  [FIXED] Copy: Form 144 relationships ('See Remarks', 'OFFICER'): GET /api/tickers/DELL/planned-sales: 74x ['Other insider'], 7x ['Officer'] and 3x ['Director'] (raw values in the DB: 'See Remarks', 'Officer', 'Director'). The feed event detail and the ticker planned-sales list both go through form144_relationships(), which has a unit test.
+  [FIXED] Copy: Watchlist alerts line: /watchlist reads 'This list doesn't send alerts.' with nothing after it, which no longer contradicts Status's 'no alert channel is set up'.
+  [FIXED] Copy: number formatting (Insider trade rows on file): /tickers/DELL: 'Insider trade rows on file 3,049' (toLocaleString).
+  [FIXED] Copy: watchdog wording (missing noun; From X to X): Resolved single-moment events read 'At Sep 28, 8:01 AM ET'. The job is named 'Forms 3 and 5 feed'. Leftover nit: '1 job run did not finish because the worker stopped (EDGAR Form 4 feed). They are now recorded as not finished.' mixes singular and plural (watchdog.py:452-454).
+-- findings:
+  [minor] Consistency of counts across pages | backend/src/smt/api/routers/tickers.py:192 (ticker header: date.today() - 90 days) vs tickers.py ticker_index (since = _today() - (days - 1)); /tickers?days=90 vs /tickers/UMC
+     PROBLEM: The same '90 days' covers different windows on two pages. The /tickers ranking counts 90 days, including today, on the ET date (Jul 1 to Sep 28). The ticker header counts 91 days from the server's local date (Jun 30 on). Reproduction: GET /api/tickers?days=90&sort=sells&q=UMC returns sells: 4; GET /api/tickers/UMC returns open_market_sells_90d: 5, and the page shows 'Open-market sales, 90 days ▼ 5 trades'. The extra row is UMC's Jun 30 sale. A reader clicking through from the ranking sees two different counts for the same stated period.
+     FIX: Define the window once, for example a shared helper since = today_et() - timedelta(days=days - 1), and use it in both ticker() and ticker_index(), and in any other '90 days' stat such as the people directory and the profile stats. Add a test in which a trade exactly 90 days old is counted, or not, the same way by both endpoints.
+  [minor] Status / reconciliation trust | /status Nightly reconciliation table; backend/src/smt/api/routers/status.py:371-378 (found_by_check includes discovered_via='gap_fill')
+     PROBLEM: 'Found by the check' is described as 'filings the live feed hadn't picked up'. It also counts the gap filler's initial history load from before the live feed ran. The table therefore reads Sep 17 '932 | 932', Sep 18 '564 | 564' and Sep 16 '790 | 790', which says the live feed missed every filing on those days. SQL: edgar_queue for Sep 17 has gap_fill=932 and feed=0. On the page whose goal is 'zero misses', this reads as a catastrophic live-feed record that never happened.
+     FIX: Count only discovered_via='daily_index' as 'found by the check'. For days before live collection began (for example before the first feed-discovered filing, or a stored live_since), show 'Loaded from history' or '–' with a note saying the live feed wasn't running yet. Alternatively, split the columns into 'Found by the nightly check' and 'Loaded later'.
+  [minor] Copy: company-name casing (round-4 leftover) | backend/src/smt/api/routers/filings.py (/api/trades/{id} issuer), insiders.py /{slug}/trades and /{slug}/positions; web QuickLook.tsx Company (lines 183-188), people/TradesPanel.tsx SecurityCell, people/PositionsPanel.tsx
+     PROBLEM: Title-casing was applied to the ticker endpoints only. Every quick look for a company with an all-capitals EDGAR name still reads, for example, 'Company UNITED MICROELECTRONICS CORP (UMC)'. /api/trades/421 sends 'NVIDIA CORP' while /tickers/NVDA says 'Nvidia Corp'. On /people/jen-tsung-lin-2133616 the header says 'Vice President at United Microelectronics Corp' and the trades table right below says 'UMC, UNITED MICROELECTRONICS CORP'. 3,002 of 9,975 companies are affected.
+     FIX: Apply company_name(name, tickers) wherever an issuer EntityLink is built: the trade detail, person trades, positions and the planned sale in the event detail. Ideally do it in one helper that builds issuer links, so no endpoint can skip it. Add an API test asserting that /api/trades/{UMC id} returns 'United Microelectronics Corp'.
+  [minor] Methodology vs code | web/src/app/methodology/page.tsx:204 ('checked again on the following nights') and :652 ('Four more checks don't depend on those prices'); web/src/components/status/jobs.ts:50-53 (edgar.retry_daily_index)
+     PROBLEM: 1. Status lists a 'Daily index retry' job that runs every hour, and the Reconciliation lead says '(and again every hour until the index is posted)'. Methodology still says an unposted index 'is skipped that night and checked again on the following nights', and never mentions the hourly retry.
+2. The paragraph on typed totals says 'Four more checks don't depend on those prices', but the fourth check is defined by 'the same class's median price in the year before', which is built on those prices.
+     FIX: 1. Replace the sentence with: 'An index that isn't posted yet is checked again every hour until it is, and on the following nights while its day is within the five-day window.'
+2. Reword the lead-in, for example: 'Four more checks catch it: three don't depend on the company's trade prices at all, and the fourth compares the price with the same class's history over a whole year.'
+  [minor] Sources completeness | web/src/app/sources/page.tsx 'What we read from EDGAR'; backend/src/smt/sources/edgar/public_float.py:36 (data.sec.gov XBRL companyconcept EntityPublicFloat), sources/edgar/names.py:55 (data.sec.gov submissions JSON)
+     PROBLEM: Sources promises 'Where every number on this site comes from'. It lists only the latest-filings feed, document lists, the daily index and the quarterly data sets. The site also reads the SEC's XBRL company-concept API for public float, which decides whether a trade's value is left out of totals. It also reads the submissions JSON for company profiles, former names and the SIC code behind 'Sector: … (from the company's SEC industry code)'. Neither is named, and a reader who wants to verify a 'Check filing' decision can't find the source.
+     FIX: Add two entries under 'What we read from EDGAR': 'Company facts (XBRL): each company's reported public float, used by the size check; looked up for companies with large trades and refreshed every 90 days', and 'Company submissions: industry code, former names and filer names, refreshed daily in batches'. Link both to the SEC's developer API page.
+  [minor] Roles regression (edge) | backend/src/smt/api/wording.py:83-91 relationship_role (said_director regex)
+     PROBLEM: Any officer title containing the word 'director' now suppresses the board 'Director' label, including titles that aren't board seats. SQL: filing parties with officer and director both true include 'Director of Investor Relations' (3) and 'CEO, Managing Director' (6), plus 'Executive Director' (12, often a board seat abroad). They now render as 'Director of Investor Relations' and 'CEO, Managing Director', which drops the fact that the person sits on the board.
+     FIX: Treat the title as covering the board seat only when 'Director' stands as its own role: the whole title, or a list item such as ^Director[,;&/ ]|[,;&/] *Director$|, Director,. Keep appending 'Director' for 'Director of …' and 'Managing Director'. Add unit cases for 'Director of Investor Relations' → 'Director of Investor Relations, Director' and 'CEO, Managing Director' → 'CEO, Managing Director, Director'.
+  [minor] Trust copy: profile stat for flagged values | web/src/components/people/ProfileHeader.tsx:84-87
+     PROBLEM: On /people/jen-tsung-lin-2133616 the 'Open-market sells ▼ 1' card says 'no dollar values reported'. The filing did report a value, 1,630,000 in New Taiwan dollars; it is left out because it isn't in dollars. The same wording appears for rows flagged 'Check filing'. That breaks the rule that rows left out of totals are labelled as such, not described as missing.
+     FIX: When sells > 0 and the value is null because every row is flagged, say 'not in dollar totals (see trades)', or give a count, for example '1 not in dollar totals'. This needs a count of flagged rows from the profile API, alongside the value.
+  [minor] Accessibility: not-found page | web/src/app/people/[slug]/not-found.tsx:10
+     PROBLEM: /people/nobody-1 (404) renders 'No one on record at this address' as an EmptyState title with no h1, so the page has no heading at all (checked: no h1 or h2 in main). The ticker equivalent, /tickers/ZZZZ, has <PageHeader title='Ticker not found' />. Screen-reader users who navigate by heading land on nothing.
+     FIX: Add <PageHeader title="Person not found" /> above the EmptyState, matching tickers/[symbol]/not-found.tsx.
+  [minor] Test coverage for the currency display | web/src/components/ui/TradeValue.tsx priceShown/inOtherCurrency; QuickLook.tsx TradeFacts Value branch
+     PROBLEM: Round 4 asked for a component test covering the UMC row. None exists: a grep of the web tests for priceShown, price_not_usd and "filing's currency" finds nothing. The display depends on an ordering subtlety: price_not_usd is checked before value_implausible, and both flags are always present together. A later refactor could bring back the '$163.00' or 'can't be right' wording without failing a test.
+     FIX: Add a Vitest/RTL test that renders TradeFacts and DataIssueNotes with data_issues ['value_implausible','price_not_usd']. Assert that the output has no '$', contains "163.00 (filing's currency)" and 'in the filing's currency', does not contain "can't be right", and uses the heading "This price isn't in dollars".
+
+
+=== data-backend (round 5)  score 8
+Data and backend lens, round 5. I judged HEAD 041cfc4 and the running system on Mon 2026-09-28. The worker (PID 50144) started at 06:57 CDT on the latest code. Everything I did was read-only.
+
+**What checks out**
+- **Rankings:** my own SQL matches GET /api/tickers exactly for 30, 90 and 365 days, by buys and by sells, top 15. That is 90 of 90 rows, with counts, sums and insider counts all equal. is_open_market equals "P/S and not derivative" on all 327,310 rows. Securetech is gone from the buys lists.
+- **People and ticker pages:** 14 profiles agree with the API: 8 random, 3 with second copies of a trade and 3 with flagged values. Ticker-page counts for DELL, CRWD, RSG, BBD and LB also match, including trades, 90-day buys and sells, and open Form 144s.
+- **Today strip for 9/28:** it matches my recompute. The top 5 buys and sells, the filings by form (144:16, 3:11, 3/A:1, 4:96, 4/A:1), the 16 planned sales and the 14 insiders buying all agree. There's one feed event per filing.
+- **Stored XML:** 125 randomly sampled rows match field by field, 0 mismatches:
+  - 40 random Form 4 rows;
+  - 40 rows from amendments, Form 5 and derivative tables;
+  - 25 rows from today's filings;
+  - 20 Form 144 rows (shares, market value, sale date, class).
+  - Codes covered: P, S, A, F, M, J, G, D, E and C.
+- **Form 144 versions:** they are consistent. 93 of 109 amendments point at a loaded original, and every family has exactly one current version. The other 16 originals predate coverage.
+- **Coverage:** every business day from Jul 1 to Sep 25 has a daily-index check. Only 3 filings are unheld: one with no readable XML, and two that EDGAR removed (queue status 'gone').
+- **Tests and security:** pytest against smt_critic_test gave 802 passed and 0 failed. The API listens on 127.0.0.1, SQL is parameterized, and the test guards are in place.
+
+**What keeps this below 9**
+
+1. **A new false-positive source from the round-4 float fix.** Some companies report dei:EntityPublicFloat in thousands. PrimeEnergy files 73,920, Crexendo 100,173, CDT 55,200 and LandBridge 1,700,000, and these are the four smallest floats in the table. As a result, 17 real trades are flagged and left out of totals, about $134M in all. Examples:
+   - LandBridge's $93.8M Rule 144 sale at $75.05;
+   - 11 PrimeEnergy sales at about $200;
+   - Crexendo's $11.9M sale.
+
+   This is the same kind of regression as last round's Elbit case.
+2. **The 2-minute live target is still not demonstrated.**
+   - The laptop hibernated from 08:07 to 14:52 CDT. The system event log shows lid closed on battery, so most of today's filing hours were an outage.
+   - After it woke, 35 Form 4s were measured: p50 64 s, p95 110 s, max 119 s, none over 120 s.
+   - /status still reports p95 1,176 s and target_met false over its window.
+   - The margin is thin for a cause in the code: 63 of today's 357 Form 4 polls took over 30 s, and 17 took over 60 s, often with only one feed page fetched. The HTTP client has a 30 s timeout and retries transport errors without logging them. One poll that stalled for 84 s pushed a 16:05 ET burst to 116 to 119 s.
+3. **Bank Bradesco prices are in reais and counted as dollars.** The rows are for "Preference shares - BBDC4" at R$16.6–18.5, with no footnote. There are 31 rows, $34.9M in all, and BBD is #12 on the 30-day buys list.
+
+Smaller items: Kanzhun and FinVolution per-share prices are still flagged as per-ADS, Bending Spoons' 'exchange ratio' note is still read as not dollars, three names still read in the wrong order, and prices are still stale with no watchdog finding.
+
+--- round-4 items
+* [PARTLY] [major] Currency check false positives (Elbit, Nayax, HSBC, Bending Spoons)
+  Elbit is now counted: tx 26971, 26979, 26963, 26967 and 26987 have data_issues {}. Nayax 101533, 101535 and 252514 are {}, and so is HSBC 250867. Bending Spoons X rows 298094, 298170, 298172, 298174 and 298182 are still {value_implausible,price_not_usd}. Their note reads 'based on an exchange ratio of 1.1607 U.S. dollars per 1.00 euro', and _IN_USD only matches 'exchange rate', not 'exchange ratio'. These are X rows, so this affects the display, not totals (5 rows, $107k).
+* [FIXED] [major] Currency false negative: ASE '$465 to $465.5 New Taiwan Dollars'
+  tx 12932 ($152.6M) and 12876 now carry {value_implausible,price_not_usd}. All 46 ASE rows are flagged. I re-checked every issuer with price_not_usd (20 issuers): all are true positives (UMC, Takeda JPY, Infosys and Wipro INR, IRSA ARS, Cosan BRL, IperionX AUD, Aura CAD, CEMEX MXN and others).
+* [FIXED] [major] Securetech tx 282136 ($100M preferred 'buy') counted
+  282136 is now {value_implausible}, via the new HISTORY_FACTOR rule (1000x the class's median of $1). SCTH is gone from the 90- and 365-day buys lists. Over the whole database, the history rule catches only Quantum Cyber, Securetech, Rare Element (2 rows) and Navios, all real errors. JFrog and Infosys are near misses that other rules already flag.
+* [FIXED] [major] 30-minute recompute clears load-time currency flags (Cosan)
+  The pre-filter is now CURRENCY_HINT_SQL, built from _CURRENCIES itself. Cosan 52600, 52601, 52621 and 271216 carry {value_implausible,price_not_usd}. The recompute at 14:53 reported 0 flags cleared and 0 newly flagged, so the flags are stable across the recompute.
+* [FIXED] [minor] Detection metric: 10-minute outage exclusion; window_days label
+  status.py now uses o.down_from < f.accepted_at + make_interval(secs => :target), with target 120 s. I recomputed from heartbeats: 351 measured, p50 91.65 s, p95 1,181 s. /api/status gave 349, 91.65 s and 1,184.5 s; the small difference is timing. StatusView.tsx:185-187 prints 'since <date>' when since is inside the 7-day window.
+* [PARTLY] [P1] 2-minute live target met
+  The host hibernated from 08:07 to 14:52 CDT: Kernel-Power 42, 'Standby Battery Budget Exceeded'. The worker log is silent from 13:07 to 19:52 UTC. Before that, 8 Form 4s were measured, including one at 275 s at 06:01 ET, which ran on code older than 772313d. After waking, 35 Form 4s: p50 64 s, p95 110 s, max 119 s, 0 over 120 s. Per day, excluding outages: 9/24 p95 192 s, 9/25 p95 1,334 s, 9/28 so far 10 measured with p95 195 s before the wake. /status says target_met false. I can't honestly call the target met.
+* [FIXED] [minor] Poller holes: watermark
+  _poll keeps watermarks in the job cursor. It advances only after paging ends normally and pages back to the mark minus 10 minutes. After the 6.75-hour sleep, the first Form 4 poll fetched 3 pages and discovered 82 filings; Form 144 discovered 14 and Forms 3/5 discovered 11. Today's 96 Form 4s filed before 15:53 ET are in line with other days (63 to 136). All 161 filings today came through the feed. Tonight's daily index is the final check.
+* [PARTLY] [minor] ADS residual false positives (Kanzhun, Mesoblast, Legend)
+  Mesoblast 102780 and Legend 529 are now {}. Kanzhun is still flagged: 15 rows, $13.1M, prices 6.68 to 8.50 with 'Each ADS represents two Class A ordinary shares'. So is FinVolution 62455 and similar rows (price 1.01, 'Each ADS represents five', a sell-to-cover). The rule still flags whenever a ratio other than 1 is stated. The suggested check against the same class's median wasn't implemented.
+* [FIXED] [minor] Queue give-ups / 'index.json not found (yet)'
+  0001957799-26-000151 and 0001192482-26-000435 now have status 'gone' ('EDGAR no longer has this filing'). coverage.checked_days excludes gone filings. The queue shows done 45,980, gone 2 and failed 1. The failed one is 0001877589-26-000002, which has no ownershipDocument XML.
+* [FIXED] [minor] Today strip on non-business days
+  strip_day() is committed in feed.py, along with backend/tests/unit/test_today_strip_day.py. The payload carries day and edgar_open_today. Today it returns day 2026-09-28 with edgar_open_today true.
+* [PARTLY] [minor] Daily price freshness reported as ok
+  9ee857d marks a mostly-stale run 'partial', but it hasn't run since the fix; the next run is 17:30 today. prices_daily still ends on 2026-09-18 for every series. A 'partial' run sets last_ok_at, and check_failed_runs only counts 'failed', so no watchdog finding is raised.
+* [NOT] Name residuals (54522, 61719, 39824)
+  The entities table still has 'Mosich Nick', 'Gomez Hernan Diego Flores' and 'Rodriguez Carlos Roberto Aguiar' (kind person).
+
+--- findings
+* [major] Value checks: public-float yardstick (regression from the round-4 fix)
+  where: backend/src/smt/ingest/quality.py flag_totals_as_price, 'Company size' UPDATE (FLOAT_FACTOR=10); backend/src/smt/sources/edgar/public_float.py latest_public_float
+  problem: Filers type dei:EntityPublicFloat in thousands, and the rule takes the figure as dollars. The four smallest floats in issuer_public_float are all scale errors: CDT 55,200 (it reported 41,401,162 the year before), PrimeEnergy 73,920 (66,363,685 before), Crexendo 100,173, and LandBridge 1,700,000 for a company worth billions. Any trade over 10x those figures is flagged value_implausible and left out of totals. That is 17 real trades, about $134M.
+
+Examples:
+- LandBridge tx 296766 (0001193125-26-345454): 1,250,000 Class A at $75.05 = $93.8M, a Rule 144 sale explained in its own footnote.
+- PrimeEnergy tx 11122 (0000912282-26-000657): 13,274 at $231.60, with a range of $229.00 to $235.23, plus 10 more sales.
+- Crexendo tx 80422 and 80423 ($11.9M and $5.2M at about $10).
+- CDT tx 86140 and 86142.
+
+Effect on the rankings: /api/tickers?days=365&q=LB shows sells $3.97M instead of about $97.8M, PNRG $2.67M with 9 trades without value, and CXDO $7.6M with 2 without value.
+
+Reproduce: SELECT t.id, e.name, t.value, p.public_float FROM transactions t JOIN issuer_public_float p ON p.entity_id=t.issuer_entity_id JOIN entities e ON e.id=t.issuer_entity_id WHERE p.public_float>0 AND p.as_of>t.traded_on-1100 AND t.code IN ('P','S') AND t.is_current AND NOT t.is_derivative AND t.value>10*p.public_float;
+  fix: Don't trust a float that is itself implausible:
+- Ignore a reported float more than 100x below the company's previous reported float. The companyconcept JSON already holds the history.
+- Also ignore a float more than 100x below dei:EntityCommonStockSharesOutstanding x the class's median trade price.
+- Alternatively, apply the float rule only when the price is also anomalous: at least $1,000, or more than RELATIVE_PRICE_FACTOR x the class median.
+
+Add golden tests on tx 296766, 11122 and 80422 expecting no flag, and keep 282136, 301420 and 250468 flagged.
+* [major] Live detection (P1: under 2 minutes during filing hours)
+  where: backend/src/smt/net/client.py HttpClient (timeout=30.0; the `except httpx.TransportError` branch retries without logging); backend/src/smt/sources/edgar/jobs.py _poll / poll_ownership; scheduler cadence
+  problem: Some feed polls stall for more than a minute, and the retries behind them are never logged. Today 63 of 357 Form 4 polls (ingestion_runs, job edgar.poll_ownership, status ok) took over 30 s, and 17 took over 60 s. Most fetched a single feed page and found 0 filings (for example 06:00:22 took 66 s, 07:00:16 took 108 s and 14:54:53 took 82 s). No http.retry lines appear for them. A ReadTimeout is retried after the 30 s timeout without being logged; one such case surfaced as 'failed after 5 attempts (ReadTimeout)' at 12:16 UTC on the type=3 feed. Because the next poll waits for the current one, one stall delays everything accepted meanwhile.
+
+At 16:05 ET, poll 13857 took 84 s. The 16 filings accepted from 15:05:03 to 15:06:11 CDT (16:05 to 16:06 ET) were enqueued together at 15:06:55, with totals of 103 to 119 s (0001193125-26-405313 at 119 s). The post-wake sample passes narrowly: 35 Form 4s, p95 110 s, max 119 s. The /status window reports p95 1,176 s and target_met false.
+
+Separately, the host hibernated from 08:07 to 14:52 CDT. The watchdog runs inside the worker, so nothing could alert during that gap. This is operational; the spec's production VPS and external uptime check cover it.
+  fix: - Give LIVE feed requests their own short timeout, for example httpx.Timeout(connect=5, read=10), and retry at once. Keep 30 s for documents.
+- Log every transport retry: url, exception type, attempt.
+- Start Form 4 polls on a fixed 20 s cadence even while one is in flight (the queue already dedupes by accession), or send a second request when the first takes more than 10 s.
+- Record the fetch time per poll in stats so /status can show where the wait is spent.
+- Then measure p95 on a full business day with the worker up.
+* [minor] Currency check false negative (no footnote)
+  where: backend/src/smt/ingest/quality.py price_in_foreign_currency / row_issues (footnote-only), Bank Bradesco (issuer 418)
+  problem: Bradesco reports its B3-listed preferred shares at the local price in reais, with no currency footnote. For example, 0001292814-26-004621 tx 252770 lists 'Preference shares - BBDC4', 309,111 shares at 17.98 = '$5,557,815.78'. The XML has no footnotes. BBDC4 trades at about R$17–18, while the BBD ADR is about $3. In total, 31 counted rows add $34.9M, about 5x too much. BBD is #12 on /api/tickers?days=30&sort=buys at $26,953,224.66, and BBD has no stored price series to catch it. A security-title search for local listing codes found only Bradesco affected: Santander Brasil SANB11 at about 5.5 and TSMC 2330.TW (translated) are in dollars.
+  fix: Treat a row whose security title names a non-US listing code (for example \b[A-Z]{4}\d{1,2}\b as in BBDC4, or .TW/.SA/.TO/.AX/.L) and whose notes have no USD statement as 'currency unverified' (price_not_usd, out of totals). Alternatively, store the issuer's ADR prices and flag prices more than 3x the ADR close for issuers with a non-US address. Add a golden test on 0001292814-26-004621.
+* [minor] ADS check: ratio-only rule
+  where: backend/src/smt/ingest/quality.py ads_mismatch (final `return ratio is not None or ...`)
+  problem: A stated ADS ratio alone makes the row count as priced per ADS, even when the price is plainly per ordinary share:
+- Kanzhun: 15 rows ($13.1M), for example tx 265515 at $8.50 with a range of '$8.47 to $8.535'. The note says 'Each ADS represents two Class A ordinary shares'. The ADS trades at about twice that.
+- FinVolution: tx 62455 and others at $1.01 (five shares per ADS), a sell-to-cover.
+
+These real trades are left out of totals. Burning Rock and Mesoblast are flagged correctly, because their notes say the price is per ADS.
+  fix: When only a ratio is stated and no note says the price is per ADS, flag only if the price is at least about ratio/2 times the same class's median of other unflagged rows, or an external close. Add golden cases for Kanzhun 265515 (expect not flagged) and Burning Rock 329531 (expect flagged).
+* [minor] Currency conversion phrasing
+  where: backend/src/smt/ingest/quality.py _IN_USD
+  problem: The note 'The price reported herein is based on an exchange ratio of 1.1607 U.S. dollars per 1.00 euro' isn't recognised as a conversion into dollars. As a result, Bending Spoons tx 298094, 298170, 298172, 298174 and 298182 (code X, $107k) are shown as 'not in dollars'. This was named in round 4.
+  fix: Accept 'exchange\s+rat(e|io)' in the conversion branch, and 'U\.?S\.? dollars? per [\d.]+ <currency>'. Add this note as a golden case expecting False.
+* [minor] Prices: freshness alerting and split-adjusted yardstick
+  where: backend/src/smt/prices/jobs.py refresh_daily; backend/src/smt/worker/watchdog.py check_failed_runs; quality.py flag_totals_as_price (closing-price yardstick)
+  problem: 1. prices_daily ends on 2026-09-18 for every series. The new 'partial' status sets last_ok_at, and check_failed_runs only counts 'failed', so no watchdog finding is ever raised for stale prices.
+2. The stored closes are split-adjusted, while Form 4 prices are as filed. CRWD Form 4 sales are at about $684 against a stored close of about $168 (4:1); KLAC $2,213 against $241 (10:1); CVNA $324 against $65 (5:1). The external yardstick compares unlike units. Nothing is falsely flagged today because the factor is 50, but a split of 50:1 or more (Chipotle-style) would flag every pre-split trade of $1,000 or more.
+  fix: Raise a watchdog finding when refresh_daily reports mostly_stale, and check why the upstream price cache stopped on 9/18. For the yardstick, compare against unadjusted closes, or adjust Form 4 prices by the split factors between the trade date and today.
+* [minor] Entity names
+  where: entities 54522, 61719, 39824
+  problem: Three person names are still in last-first order: 'Mosich Nick', 'Gomez Hernan Diego Flores' and 'Rodriguez Carlos Roberto Aguiar'. They appear on profiles and in search.
+  fix: Apply the same surname-first reordering used for the fixed cases (10094, 45881), for example by using the reporting owner's signature name when it differs only in order. Add these three as unit cases.
