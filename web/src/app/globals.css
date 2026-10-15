@@ -1,0 +1,152 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens: docs/design/tokens-and-wireframes.md is the source of truth.
+ * Every contrast ratio there was computed; do not change a color here without
+ * re-running the checks.
+ */
+@theme {
+  /*
+   * Light content, navy menu (owner request 2026-10-14; the page was black before, navy
+   * before that). Ratios are WCAG contrast against white / console / raised.
+   */
+  /* Surfaces and ink */
+  --color-night: #ffffff;       /* page background                Paper 17.3, Dim 6.5 */
+  --color-console: #f5f7fa;     /* panels, tables, tiles          Paper 16.2, Dim 6.1 */
+  --color-raised: #e9eef5;      /* header rows, hover, selection  Paper 14.9, Dim 5.6 */
+  --color-hairline: #dce2eb;    /* decorative rules only (1.30:1 on white) */
+  --color-rule-strong: #7b869c; /* control outlines (3.66 / 3.41 / 3.14) */
+  --color-paper: #111a2e;       /* primary text, focus ring (the name is the dark theme's; it is the ink) */
+  --color-dim: #535e74;         /* secondary text; nothing lighter is used for text */
+
+  /* Reserved meanings: never color alone (always a glyph, sign or word too) */
+  --color-inflow: #08756b;       /* buys (text, glyphs)   5.57 / 5.19 / 4.78 */
+  --color-outflow: #ad4a0b;      /* sells (text, glyphs)  5.58 / 5.20 / 4.79 */
+  --color-inflow-mark: #14958a;  /* chart fills for buys   3.69 on white */
+  --color-outflow-mark: #d9692a; /* chart fills for sells  3.50 on white */
+  --color-neutral-mark: #7d889e; /* "unchanged", diverging midpoint  3.55 on white */
+  --color-beacon: #6b4a00;       /* alerts, errors, stale sources (text)  8.06 / 7.51 / 6.92. Sparingly. */
+
+  /* Non-polarity chart series (max 3; see design sheet §2.3); 4.1 or more on every surface */
+  --color-series-1: #2f6fd6;
+  --color-series-2: #c23e70;
+  --color-series-3: #6e5bd8;
+
+  /* Depth: a scrim behind dialogs, and the shadow of things that float (dialogs, tooltips, menus) */
+  --color-scrim: rgb(17 26 46 / 0.42);
+  --shadow-float: 0 1px 2px rgb(17 26 46 / 0.06), 0 12px 32px rgb(17 26 46 / 0.16);
+  --shadow-card: 0 1px 2px rgb(17 26 46 / 0.05);
+
+  /* Type */
+  --font-display: var(--font-barlow), "Arial Narrow", sans-serif;
+  --font-sans: var(--font-plex-sans), "Segoe UI", system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, "Cascadia Mono", monospace;
+
+  /* Radii scale with hierarchy: outer rounder, inner tighter */
+  --radius-panel: 8px;
+  --radius-block: 6px;
+  --radius-control: 4px;
+  --radius-chip: 3px;
+  --radius-id: 2px;
+
+  /* Motion */
+  --ease-out-soft: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out-soft: cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+:root {
+  color-scheme: light;
+}
+
+/*
+ * The navy menu: the side rail, the phone's bottom bar and its "More" sheet. The same token
+ * names, set back to the navy palette inside them, so every class used there (text-paper,
+ * text-dim, bg-raised, the focus ring) reads light on navy. Ratios on console / raised.
+ */
+.theme-navy {
+  color-scheme: dark;
+  --color-night: #0d1526;
+  --color-console: #152038;     /* Paper 13.86, Dim 6.23 */
+  --color-raised: #1f2f50;      /* Paper 11.36, Dim 5.11 */
+  --color-hairline: #25324f;
+  --color-rule-strong: #6878a0;
+  --color-paper: #f1ede2;
+  --color-dim: #94a1bb;
+  --color-beacon: #f4ce5a;
+  --color-inflow: #4fc3b8;
+  --color-outflow: #f08a4b;
+  background-color: var(--color-console);
+  color: var(--color-paper);
+}
+
+html,
+body {
+  background: var(--color-night);
+  color: var(--color-paper);
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 20px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Tabular, lining figures wherever numbers stack (spec §9). */
+.num {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* Visible keyboard focus everywhere: 2px Paper ring, 2px offset (≥ 11:1 on all surfaces). */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-paper);
+  outline-offset: 2px;
+  border-radius: var(--radius-control);
+}
+
+/* <main> takes focus only as a landing point (skip link, a closed dialog): no ring around the whole page. */
+#main:focus {
+  outline: none;
+}
+
+/* The Live grid is one big focus target: draw its ring inside so it isn't clipped at the page edges. */
+.feed-grid:focus-visible {
+  outline-offset: -2px;
+}
+
+/* Skeleton loaders (never spinners for tables). */
+.skeleton {
+  background: linear-gradient(90deg, var(--color-console) 0%, var(--color-raised) 50%, var(--color-console) 100%);
+  background-size: 200% 100%;
+  animation: skeleton 1.4s ease-in-out infinite;
+  border-radius: var(--radius-chip);
+}
+@keyframes skeleton {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+
+/* The one orchestrated motion: a new filing arriving on the downlink. */
+@keyframes downlink-arrive {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes downlink-carrier {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+.downlink-row {
+  animation: downlink-arrive 240ms var(--ease-out-soft) both;
+}
+.downlink-carrier {
+  transform-origin: left center;
+  animation: downlink-carrier 700ms var(--ease-in-out-soft) 240ms both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

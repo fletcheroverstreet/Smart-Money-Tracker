@@ -1,0 +1,4506 @@
+{
+ "openapi": "3.1.0",
+ "info": {
+  "title": "Smart Money Tracker API",
+  "description": "Read-only API over official public disclosures. Research tool, not investment advice.",
+  "version": "0.1.0"
+ },
+ "paths": {
+  "/healthz": {
+   "get": {
+    "tags": [
+     "health"
+    ],
+    "summary": "Healthz",
+    "description": "Used by Docker health checks and the external uptime monitor.",
+    "operationId": "healthz_healthz_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Health"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/healthz/worker": {
+   "get": {
+    "tags": [
+     "health"
+    ],
+    "summary": "Worker Health",
+    "operationId": "worker_health_healthz_worker_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/WorkerHealth"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/status": {
+   "get": {
+    "tags": [
+     "status"
+    ],
+    "summary": "Status",
+    "description": "Everything the Status page shows, in one call.",
+    "operationId": "status_api_status_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/StatusReport"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/status/coverage": {
+   "get": {
+    "tags": [
+     "status"
+    ],
+    "summary": "Coverage",
+    "description": "Found vs parsed vs quarantined, per source; the fetch queue; open quarantine items.",
+    "operationId": "coverage_api_status_coverage_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Coverage"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/status/spot-check": {
+   "get": {
+    "tags": [
+     "status"
+    ],
+    "summary": "Spot Check",
+    "description": "Random recent rows from each source beside links to their original documents, for checking\nby eye (spec \u00a711): `limit` trades from Forms 3/4/5 and `limit` Form 144 notices, from the last\n30 days, taken only from filings loaded from their own XML (so the document link is there).",
+    "operationId": "spot_check_api_status_spot_check_get",
+    "parameters": [
+     {
+      "name": "limit",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "default": 20,
+       "title": "Limit"
+      }
+     },
+     {
+      "name": "days",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "default": 30,
+       "title": "Days"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "$ref": "#/components/schemas/SpotCheckRow"
+         },
+         "title": "Response Spot Check Api Status Spot Check Get"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/feed": {
+   "get": {
+    "tags": [
+     "feed"
+    ],
+    "summary": "Feed",
+    "description": "Live feed, keyset-paged by (detected_at, id) descending.\n\nBy default only open-market buys and sells (codes P and S) are shown among\ninsider trades; pass codes=all to include grants, exercises and the rest.",
+    "operationId": "feed_api_feed_get",
+    "parameters": [
+     {
+      "name": "cursor",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Cursor"
+      }
+     },
+     {
+      "name": "limit",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "maximum": 200,
+       "minimum": 1,
+       "default": 50,
+       "title": "Limit"
+      }
+     },
+     {
+      "name": "types",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "description": "comma list: insider_trade,planned_sale,insider_holding",
+       "title": "Types"
+      },
+      "description": "comma list: insider_trade,planned_sale,insider_holding"
+     },
+     {
+      "name": "codes",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "description": "Form 4 codes, e.g. 'P,S' (default) or 'all'",
+       "default": "P,S",
+       "title": "Codes"
+      },
+      "description": "Form 4 codes, e.g. 'P,S' (default) or 'all'"
+     },
+     {
+      "name": "min_size",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "number",
+         "minimum": 0
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "description": "minimum dollar size",
+       "title": "Min Size"
+      },
+      "description": "minimum dollar size"
+     },
+     {
+      "name": "ticker",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Ticker"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/FeedPage"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/feed/events/{event_id}": {
+   "get": {
+    "tags": [
+     "feed"
+    ],
+    "summary": "Event Detail",
+    "description": "One feed event in full, for the quick look (Form 144 notices and Form 3 statements;\na trade's own detail is /api/trades/{id}).",
+    "operationId": "event_detail_api_feed_events__event_id__get",
+    "parameters": [
+     {
+      "name": "event_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Event Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/FeedEventDetail"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/feed/today": {
+   "get": {
+    "tags": [
+     "feed"
+    ],
+    "summary": "Today",
+    "description": "Today's strip: largest open-market buys and sells, filings by form (US Eastern date).\nOn a weekend or SEC holiday it covers the latest business day (see strip_day).",
+    "operationId": "today_api_feed_today_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/TodaySummary"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/people/insiders": {
+   "get": {
+    "tags": [
+     "people"
+    ],
+    "summary": "Directory",
+    "description": "Insiders with their most senior role (an officer role first, the top title first, then a\nboard seat, then 10% ownership) and open-market activity counts.",
+    "operationId": "directory_api_people_insiders_get",
+    "parameters": [
+     {
+      "name": "q",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string",
+         "maxLength": 80
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Q"
+      }
+     },
+     {
+      "name": "role",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string",
+         "pattern": "^(officer|director|ten_pct_owner|other_insider)$"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Role"
+      }
+     },
+     {
+      "name": "sort",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "pattern": "^(recent|buys|sells|name)$",
+       "default": "recent",
+       "title": "Sort"
+      }
+     },
+     {
+      "name": "cursor",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Cursor"
+      }
+     },
+     {
+      "name": "limit",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "maximum": 200,
+       "minimum": 1,
+       "default": 50,
+       "title": "Limit"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/DirectoryPage"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/people/{slug}": {
+   "get": {
+    "tags": [
+     "people"
+    ],
+    "summary": "Profile",
+    "description": "Header, roles, stats and a plain-language summary built only from stored filings.",
+    "operationId": "profile_api_people__slug__get",
+    "parameters": [
+     {
+      "name": "slug",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Slug"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/PersonProfile"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/people/{slug}/trades": {
+   "get": {
+    "tags": [
+     "people"
+    ],
+    "summary": "Trades",
+    "description": "This person's trades (including joint filings), newest trade date first.",
+    "operationId": "trades_api_people__slug__trades_get",
+    "parameters": [
+     {
+      "name": "slug",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Slug"
+      }
+     },
+     {
+      "name": "codes",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "description": "'P,S' (default) or 'all'",
+       "default": "P,S",
+       "title": "Codes"
+      },
+      "description": "'P,S' (default) or 'all'"
+     },
+     {
+      "name": "cursor",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Cursor"
+      }
+     },
+     {
+      "name": "limit",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "maximum": 500,
+       "minimum": 1,
+       "default": 100,
+       "title": "Limit"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/TradePage"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/people/{slug}/planned-sales": {
+   "get": {
+    "tags": [
+     "people"
+    ],
+    "summary": "Planned Sales",
+    "description": "Form 144 notices this person or organization filed as the seller, newest first, each\nwith the company whose shares it is about (and its ticker, when it has a ticker page).",
+    "operationId": "planned_sales_api_people__slug__planned_sales_get",
+    "parameters": [
+     {
+      "name": "slug",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Slug"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "$ref": "#/components/schemas/PlannedSaleOut"
+         },
+         "title": "Response Planned Sales Api People  Slug  Planned Sales Get"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/people/{slug}/positions": {
+   "get": {
+    "tags": [
+     "people"
+    ],
+    "summary": "Positions",
+    "description": "Reported holdings after each transaction, one series per issuer, class and ownership form.",
+    "operationId": "positions_api_people__slug__positions_get",
+    "parameters": [
+     {
+      "name": "slug",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Slug"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "$ref": "#/components/schemas/PositionSeries"
+         },
+         "title": "Response Positions Api People  Slug  Positions Get"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/tickers": {
+   "get": {
+    "tags": [
+     "tickers"
+    ],
+    "summary": "Ticker Index",
+    "description": "Companies ranked by open-market insider trading over the last `days` days.\n\nWhat is counted, and why:\n\n* Only **open-market purchases and sales** (Form 4/5 codes P and S). Awards,\n  option exercises, tax withholding and gifts are left out of every column,\n  because none of them is a decision to buy or sell at the market price.\n* Only **current** rows. When an amendment (4/A) corrects a trade, the\n  corrected row counts and the replaced one doesn't, so nothing counts twice.\n* The window runs on the **trade date**, from `since` to today (US Eastern),\n  both inclusive. A trade dated in the future (a typo in a filing) isn't in\n  \"the last N days\", so it is left out.\n* Dollar sums add the values reported on the filings. Two kinds of trade\n  still count as trades but add nothing to the sums, so the sums are lower\n  bounds when either count is above zero:\n  - `trades_without_price`: the filing gives no price, so there is no value;\n  - `trades_left_out` (per side `buys_left_out`, `sells_left_out`): the\n    filing gives a price, but it isn't a dollar price per share: another\n    currency (UMC's Form 4s state New Taiwan dollars), a foreign listing\n    whose currency isn't stated (Bradesco's BBDC4), or a figure that can't\n    be right as filed (smt/ingest/quality.py flags all three\n    `value_implausible`). These did report a price, so calling them\n    \"no price\" would be wrong.\n  A side with no trades has a null sum (shown as a dash, never $0).\n* `insiders` counts the owner each trade is attributed to. A joint filing\n  (a fund with its general partner and manager) counts once.\n\nInsider activity is issuer-level, like the ticker page itself: a company\nwith several share classes appears once, under the ticker its insiders'\nfilings use most. Companies with no ticker are left out.\n\n`sort`: activity (number of trades), buys (purchase value), sells (sale\nvalue) or net (purchases minus sales). `q` keeps tickers or company names\nthat start with it. Paging is by offset (`next_cursor`), because the ranking\nkeys are aggregates that change as filings arrive.",
+    "operationId": "ticker_index_api_tickers_get",
+    "parameters": [
+     {
+      "name": "days",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "maximum": 365,
+       "minimum": 1,
+       "default": 30,
+       "title": "Days"
+      }
+     },
+     {
+      "name": "sort",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "pattern": "^(activity|buys|sells|net)$",
+       "default": "activity",
+       "title": "Sort"
+      }
+     },
+     {
+      "name": "q",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string",
+         "maxLength": 40
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Q"
+      }
+     },
+     {
+      "name": "cursor",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Cursor"
+      }
+     },
+     {
+      "name": "limit",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "maximum": 200,
+       "minimum": 1,
+       "default": 50,
+       "title": "Limit"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/TickerIndexPage"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/tickers/{symbol}": {
+   "get": {
+    "tags": [
+     "tickers"
+    ],
+    "summary": "Ticker",
+    "operationId": "ticker_api_tickers__symbol__get",
+    "parameters": [
+     {
+      "name": "symbol",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Symbol"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/TickerProfile"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/tickers/{symbol}/events": {
+   "get": {
+    "tags": [
+     "tickers"
+    ],
+    "summary": "Events",
+    "description": "Markers for the event timeline: insider trades and planned sales, by trade date.",
+    "operationId": "events_api_tickers__symbol__events_get",
+    "parameters": [
+     {
+      "name": "symbol",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Symbol"
+      }
+     },
+     {
+      "name": "start",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string",
+         "format": "date"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Start"
+      }
+     },
+     {
+      "name": "end",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string",
+         "format": "date"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "End"
+      }
+     },
+     {
+      "name": "all_codes",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "boolean",
+       "default": false,
+       "title": "All Codes"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "$ref": "#/components/schemas/TimelineEvent"
+         },
+         "title": "Response Events Api Tickers  Symbol  Events Get"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/tickers/{symbol}/insiders": {
+   "get": {
+    "tags": [
+     "tickers"
+    ],
+    "summary": "Insider Trades",
+    "operationId": "insider_trades_api_tickers__symbol__insiders_get",
+    "parameters": [
+     {
+      "name": "symbol",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Symbol"
+      }
+     },
+     {
+      "name": "codes",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "default": "P,S",
+       "title": "Codes"
+      }
+     },
+     {
+      "name": "cursor",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Cursor"
+      }
+     },
+     {
+      "name": "limit",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "maximum": 500,
+       "minimum": 1,
+       "default": 100,
+       "title": "Limit"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/TradePage"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/tickers/{symbol}/planned-sales": {
+   "get": {
+    "tags": [
+     "tickers"
+    ],
+    "summary": "Planned Sales",
+    "description": "Form 144 notices for this issuer, newest first.",
+    "operationId": "planned_sales_api_tickers__symbol__planned_sales_get",
+    "parameters": [
+     {
+      "name": "symbol",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Symbol"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "$ref": "#/components/schemas/PlannedSaleOut"
+         },
+         "title": "Response Planned Sales Api Tickers  Symbol  Planned Sales Get"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/trades/{trade_id}": {
+   "get": {
+    "tags": [
+     "trades"
+    ],
+    "summary": "Trade Detail",
+    "description": "One trade for the quick look; `trade.in_totals` follows the site-wide rule (COUNTED).",
+    "operationId": "trade_detail_api_trades__trade_id__get",
+    "parameters": [
+     {
+      "name": "trade_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Trade Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/TradeDetail"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/search": {
+   "get": {
+    "tags": [
+     "search"
+    ],
+    "summary": "Search",
+    "operationId": "search_api_search_get",
+    "parameters": [
+     {
+      "name": "q",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "minLength": 1,
+       "maxLength": 80,
+       "title": "Q"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/SearchResults"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/stream": {
+   "get": {
+    "tags": [
+     "stream"
+    ],
+    "summary": "Stream",
+    "description": "Live feed events. Event types: `feed` (a new disclosure), `heartbeat`, `hello`.",
+    "operationId": "stream_api_stream_get",
+    "parameters": [
+     {
+      "name": "Last-Event-ID",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Last-Event-Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/meta/codes": {
+   "get": {
+    "tags": [
+     "meta"
+    ],
+    "summary": "Codes",
+    "description": "Form 4 transaction codes and their plain-English meanings (for tooltips).",
+    "operationId": "codes_api_meta_codes_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "$ref": "#/components/schemas/CodeOut"
+         },
+         "type": "array",
+         "title": "Response Codes Api Meta Codes Get"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/meta/sources": {
+   "get": {
+    "tags": [
+     "meta"
+    ],
+    "summary": "Sources",
+    "description": "Every data source, what it reveals, its legal lag and how often we check it.",
+    "operationId": "sources_api_meta_sources_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "$ref": "#/components/schemas/SourceOut"
+         },
+         "type": "array",
+         "title": "Response Sources Api Meta Sources Get"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/meta/coverage": {
+   "get": {
+    "tags": [
+     "meta"
+    ],
+    "summary": "Coverage",
+    "description": "Filing dates held for Forms 3/4/5, and the business days inside that range that aren't\nfully loaded.\n\nEach day is compared with the SEC's daily index (the official list of the\nday's filings): a day counts as loaded when 99% of its filings are held.\nDays not yet compared count as loaded when they hold at least 50 Form 4s\n(EDGAR receives hundreds every business day). Today is left out until its\nindex is published in the evening.",
+    "operationId": "coverage_api_meta_coverage_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/DataCoverage"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/private/session": {
+   "get": {
+    "tags": [
+     "private"
+    ],
+    "summary": "Session",
+    "operationId": "session_api_private_session_get",
+    "parameters": [
+     {
+      "name": "smt_private",
+      "in": "cookie",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Smt Private"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/SessionOut"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/private/login": {
+   "post": {
+    "tags": [
+     "private"
+    ],
+    "summary": "Login",
+    "operationId": "login_api_private_login_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/LoginIn"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/SessionOut"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/private/logout": {
+   "post": {
+    "tags": [
+     "private"
+    ],
+    "summary": "Logout",
+    "operationId": "logout_api_private_logout_post",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/SessionOut"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/private/prices/{symbol}": {
+   "get": {
+    "tags": [
+     "private"
+    ],
+    "summary": "Prices",
+    "description": "Daily closes for one ticker from the stored price history (licensed data: private mode only).",
+    "operationId": "prices_api_private_prices__symbol__get",
+    "parameters": [
+     {
+      "name": "symbol",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Symbol"
+      }
+     },
+     {
+      "name": "days",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "maximum": 3650,
+       "minimum": 1,
+       "description": "calendar days back from today",
+       "default": 365,
+       "title": "Days"
+      },
+      "description": "calendar days back from today"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/PriceSeriesOut"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  }
+ },
+ "components": {
+  "schemas": {
+   "CodeOut": {
+    "properties": {
+     "code": {
+      "type": "string",
+      "title": "Code"
+     },
+     "label": {
+      "type": "string",
+      "title": "Label"
+     },
+     "open_market": {
+      "type": "boolean",
+      "title": "Open Market"
+     }
+    },
+    "type": "object",
+    "required": [
+     "code",
+     "label",
+     "open_market"
+    ],
+    "title": "CodeOut"
+   },
+   "Coverage": {
+    "properties": {
+     "documents": {
+      "items": {
+       "$ref": "#/components/schemas/CoverageRow"
+      },
+      "type": "array",
+      "title": "Documents"
+     },
+     "queue": {
+      "items": {
+       "$ref": "#/components/schemas/QueueRow"
+      },
+      "type": "array",
+      "title": "Queue"
+     },
+     "quarantine": {
+      "items": {
+       "$ref": "#/components/schemas/QuarantineRow"
+      },
+      "type": "array",
+      "title": "Quarantine"
+     }
+    },
+    "type": "object",
+    "required": [
+     "documents",
+     "queue",
+     "quarantine"
+    ],
+    "title": "Coverage"
+   },
+   "CoverageRow": {
+    "properties": {
+     "source": {
+      "type": "string",
+      "title": "Source"
+     },
+     "parse_status": {
+      "type": "string",
+      "title": "Parse Status"
+     },
+     "documents": {
+      "type": "integer",
+      "title": "Documents"
+     }
+    },
+    "type": "object",
+    "required": [
+     "source",
+     "parse_status",
+     "documents"
+    ],
+    "title": "CoverageRow"
+   },
+   "DataCoverage": {
+    "properties": {
+     "first_filed": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "First Filed"
+     },
+     "last_filed": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Last Filed"
+     },
+     "gaps": {
+      "items": {
+       "$ref": "#/components/schemas/DateSpan"
+      },
+      "type": "array",
+      "title": "Gaps"
+     }
+    },
+    "type": "object",
+    "required": [
+     "first_filed",
+     "last_filed",
+     "gaps"
+    ],
+    "title": "DataCoverage",
+    "description": "Which filing dates this site holds for Forms 3/4/5 (so windows like \"last 90 days\" are honest)."
+   },
+   "DateSpan": {
+    "properties": {
+     "first": {
+      "type": "string",
+      "format": "date",
+      "title": "First"
+     },
+     "last": {
+      "type": "string",
+      "format": "date",
+      "title": "Last"
+     },
+     "business_days": {
+      "type": "integer",
+      "title": "Business Days"
+     },
+     "state": {
+      "type": "string",
+      "enum": [
+       "missing",
+       "partial"
+      ],
+      "title": "State",
+      "default": "missing"
+     }
+    },
+    "type": "object",
+    "required": [
+     "first",
+     "last",
+     "business_days"
+    ],
+    "title": "DateSpan"
+   },
+   "DetectionDay": {
+    "properties": {
+     "day": {
+      "type": "string",
+      "format": "date",
+      "title": "Day"
+     },
+     "filings": {
+      "type": "integer",
+      "title": "Filings",
+      "description": "filings behind the median and 95th percentile that day"
+     },
+     "p50_seconds": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "P50 Seconds"
+     },
+     "p95_seconds": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "P95 Seconds"
+     },
+     "max_seconds": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Max Seconds",
+      "description": "the slowest of those filings"
+     },
+     "filings_during_outages": {
+      "type": "integer",
+      "title": "Filings During Outages"
+     },
+     "found_later": {
+      "type": "integer",
+      "title": "Found Later"
+     }
+    },
+    "type": "object",
+    "required": [
+     "day",
+     "filings",
+     "p50_seconds",
+     "p95_seconds",
+     "max_seconds",
+     "filings_during_outages",
+     "found_later"
+    ],
+    "title": "DetectionDay",
+    "description": "One business day of the live Form 4 figures (see DetectionDelay), in Eastern time."
+   },
+   "DetectionDelay": {
+    "properties": {
+     "forms": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Forms",
+      "description": "the forms measured: Form 4 and its amendment, 4/A"
+     },
+     "window_days": {
+      "type": "integer",
+      "title": "Window Days",
+      "description": "how far back the figures look"
+     },
+     "since": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date-time"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Since",
+      "description": "start of the measured period: 7 days ago, or the worker's first heartbeat if that is later; null if the worker has never run"
+     },
+     "filings": {
+      "type": "integer",
+      "title": "Filings",
+      "description": "filings behind the median and 95th percentile"
+     },
+     "p50_seconds": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "P50 Seconds",
+      "description": "median seconds from acceptance to on the site"
+     },
+     "p95_seconds": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "P95 Seconds",
+      "description": "95% of those filings were on the site within this many seconds"
+     },
+     "target_seconds": {
+      "type": "integer",
+      "title": "Target Seconds",
+      "description": "the live goal: 95% of filings within this many seconds"
+     },
+     "target_met": {
+      "anyOf": [
+       {
+        "type": "boolean"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Target Met",
+      "description": "p95_seconds <= target_seconds; null when there's nothing to measure"
+     },
+     "outages": {
+      "type": "integer",
+      "title": "Outages",
+      "description": "times the worker was down (heartbeat gap over 5 minutes) during filing hours"
+     },
+     "outage_seconds": {
+      "type": "number",
+      "title": "Outage Seconds",
+      "description": "how long those outages lasted within filing hours, in all"
+     },
+     "filings_during_outages": {
+      "type": "integer",
+      "title": "Filings During Outages",
+      "description": "filings accepted while the worker was down, or within the target time (2 minutes) before it stopped, so the live feed never had a fair chance at them; not in the figures"
+     },
+     "found_later": {
+      "type": "integer",
+      "title": "Found Later",
+      "description": "filings the live feed missed although the worker was running, found later by the daily index checks or the gap filler; included in the figures with their full wait"
+     },
+     "days": {
+      "items": {
+       "$ref": "#/components/schemas/DetectionDay"
+      },
+      "type": "array",
+      "title": "Days",
+      "description": "the same figures for each business day in the window, newest first, so a change to the collector shows from the day it ran"
+     }
+    },
+    "type": "object",
+    "required": [
+     "forms",
+     "window_days",
+     "since",
+     "filings",
+     "p50_seconds",
+     "p95_seconds",
+     "target_seconds",
+     "target_met",
+     "outages",
+     "outage_seconds",
+     "filings_during_outages",
+     "found_later"
+    ],
+    "title": "DetectionDelay",
+    "description": "How quickly new Form 4s reach the site: from EDGAR accepting a filing to it being loaded here.\n\nOnly Forms 4 and 4/A accepted in filing hours count, so the slow off-hours polling\ndoesn't blur the figure. Filings that were waiting while the worker was down (a gap of\nover 5 minutes in its heartbeat, at any hour) are counted separately and left out of the\nmedian and the 95th percentile, and so are filings the live feed missed and a later\ncheck found. `outages` counts only the stops that reach into filing hours, so a filing\ncan be set apart for a stop that isn't in that count (accepted at 9:59 PM ET, say, with\nthe worker stopped overnight)."
+   },
+   "DirectoryPage": {
+    "properties": {
+     "items": {
+      "items": {
+       "$ref": "#/components/schemas/DirectoryRow"
+      },
+      "type": "array",
+      "title": "Items"
+     },
+     "next_cursor": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Next Cursor"
+     }
+    },
+    "type": "object",
+    "required": [
+     "items",
+     "next_cursor"
+    ],
+    "title": "DirectoryPage"
+   },
+   "DirectoryRow": {
+    "properties": {
+     "entity": {
+      "$ref": "#/components/schemas/EntityLink"
+     },
+     "role": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Role"
+     },
+     "organization": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/EntityLink"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "trades": {
+      "type": "integer",
+      "title": "Trades"
+     },
+     "open_market_buys": {
+      "type": "integer",
+      "title": "Open Market Buys"
+     },
+     "open_market_sells": {
+      "type": "integer",
+      "title": "Open Market Sells"
+     },
+     "last_traded_on": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Last Traded On"
+     }
+    },
+    "type": "object",
+    "required": [
+     "entity",
+     "role",
+     "organization",
+     "trades",
+     "open_market_buys",
+     "open_market_sells",
+     "last_traded_on"
+    ],
+    "title": "DirectoryRow"
+   },
+   "EntityLink": {
+    "properties": {
+     "name": {
+      "type": "string",
+      "title": "Name"
+     },
+     "slug": {
+      "type": "string",
+      "title": "Slug"
+     },
+     "kind": {
+      "type": "string",
+      "title": "Kind"
+     }
+    },
+    "type": "object",
+    "required": [
+     "name",
+     "slug",
+     "kind"
+    ],
+    "title": "EntityLink",
+    "description": "A person/company reference suitable for a link."
+   },
+   "FeedEventDetail": {
+    "properties": {
+     "item": {
+      "$ref": "#/components/schemas/FeedItem"
+     },
+     "accession": {
+      "type": "string",
+      "title": "Accession"
+     },
+     "filing_url": {
+      "type": "string",
+      "title": "Filing Url"
+     },
+     "filed_on": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Filed On"
+     },
+     "accepted_at": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date-time"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Accepted At"
+     },
+     "planned_sale": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/PlannedSaleOut"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "matches": {
+      "items": {
+       "$ref": "#/components/schemas/PlannedSaleMatchOut"
+      },
+      "type": "array",
+      "title": "Matches"
+     },
+     "holdings": {
+      "items": {
+       "$ref": "#/components/schemas/HoldingOut"
+      },
+      "type": "array",
+      "title": "Holdings"
+     },
+     "holding_footnotes": {
+      "items": {
+       "$ref": "#/components/schemas/FootnoteOut"
+      },
+      "type": "array",
+      "title": "Holding Footnotes",
+      "description": "Form 3: the footnotes the holdings refer to, in order"
+     }
+    },
+    "type": "object",
+    "required": [
+     "item",
+     "accession",
+     "filing_url",
+     "filed_on",
+     "accepted_at"
+    ],
+    "title": "FeedEventDetail",
+    "description": "The quick look for a feed event that isn't a single trade: a Form 144 notice or a Form 3."
+   },
+   "FeedItem": {
+    "properties": {
+     "id": {
+      "type": "integer",
+      "title": "Id"
+     },
+     "event_type": {
+      "type": "string",
+      "title": "Event Type",
+      "description": "insider_trade | planned_sale | insider_holding"
+     },
+     "form_type": {
+      "type": "string",
+      "title": "Form Type"
+     },
+     "section": {
+      "type": "string",
+      "title": "Section"
+     },
+     "detected_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Detected At"
+     },
+     "disclosed_at": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date-time"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Disclosed At"
+     },
+     "occurred_on": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Occurred On"
+     },
+     "size_usd": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Size Usd"
+     },
+     "transaction_id": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Transaction Id"
+     },
+     "payload": {
+      "additionalProperties": true,
+      "type": "object",
+      "title": "Payload"
+     }
+    },
+    "type": "object",
+    "required": [
+     "id",
+     "event_type",
+     "form_type",
+     "section",
+     "detected_at",
+     "disclosed_at",
+     "occurred_on",
+     "size_usd",
+     "transaction_id",
+     "payload"
+    ],
+    "title": "FeedItem",
+    "description": "One Live-feed row: display-ready, no joins needed on the client."
+   },
+   "FeedPage": {
+    "properties": {
+     "items": {
+      "items": {
+       "$ref": "#/components/schemas/FeedItem"
+      },
+      "type": "array",
+      "title": "Items"
+     },
+     "next_cursor": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Next Cursor"
+     }
+    },
+    "type": "object",
+    "required": [
+     "items",
+     "next_cursor"
+    ],
+    "title": "FeedPage"
+   },
+   "FootnoteOut": {
+    "properties": {
+     "id": {
+      "type": "string",
+      "title": "Id"
+     },
+     "text": {
+      "type": "string",
+      "title": "Text"
+     }
+    },
+    "type": "object",
+    "required": [
+     "id",
+     "text"
+    ],
+    "title": "FootnoteOut"
+   },
+   "HTTPValidationError": {
+    "properties": {
+     "detail": {
+      "items": {
+       "$ref": "#/components/schemas/ValidationError"
+      },
+      "type": "array",
+      "title": "Detail"
+     }
+    },
+    "type": "object",
+    "title": "HTTPValidationError"
+   },
+   "Health": {
+    "properties": {
+     "status": {
+      "type": "string",
+      "title": "Status"
+     },
+     "version": {
+      "type": "string",
+      "title": "Version"
+     },
+     "database": {
+      "type": "string",
+      "title": "Database"
+     }
+    },
+    "type": "object",
+    "required": [
+     "status",
+     "version",
+     "database"
+    ],
+    "title": "Health"
+   },
+   "HoldingOut": {
+    "properties": {
+     "security_title": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Security Title"
+     },
+     "is_derivative": {
+      "type": "boolean",
+      "title": "Is Derivative"
+     },
+     "shares": {
+      "anyOf": [
+       {
+        "type": "string",
+        "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Shares"
+     },
+     "ownership": {
+      "type": "string",
+      "title": "Ownership",
+      "description": "Direct, or the indirect holder text"
+     },
+     "underlying_title": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Underlying Title",
+      "description": "derivatives: the security it is on"
+     },
+     "underlying_shares": {
+      "anyOf": [
+       {
+        "type": "string",
+        "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Underlying Shares",
+      "description": "derivatives: shares it is on"
+     },
+     "exercise_price": {
+      "anyOf": [
+       {
+        "type": "string",
+        "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Exercise Price",
+      "description": "derivatives: exercise or conversion price"
+     },
+     "exercise_date": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Exercise Date",
+      "description": "derivatives: first date it can be exercised"
+     },
+     "expiration_date": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Expiration Date",
+      "description": "derivatives: date it expires"
+     },
+     "footnote_ids": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Footnote Ids",
+      "description": "the filing's footnotes on this line"
+     }
+    },
+    "type": "object",
+    "required": [
+     "security_title",
+     "is_derivative",
+     "shares",
+     "ownership"
+    ],
+    "title": "HoldingOut",
+    "description": "One holding listed on a Form 3 (the first statement a new insider files).\n\nFor a derivative holding (an option, a restricted stock unit, a warrant), Form 3\ngives no count of the derivatives themselves: `shares` is then None and the\nsize is `underlying_shares`, the number of shares it gives a right to. The\nterms (price, dates) are as filed; missing ones are None, never guessed."
+   },
+   "JobStatus": {
+    "properties": {
+     "name": {
+      "type": "string",
+      "title": "Name"
+     },
+     "enabled": {
+      "type": "boolean",
+      "title": "Enabled"
+     },
+     "last_ok_at": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date-time"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Last Ok At"
+     },
+     "next_run_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Next Run At"
+     },
+     "running": {
+      "type": "boolean",
+      "title": "Running"
+     },
+     "last_status": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Last Status"
+     },
+     "last_error": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Last Error",
+      "description": "why the latest run failed, as one plain sentence (the full error is in the worker's log)"
+     },
+     "last_stats": {
+      "additionalProperties": true,
+      "type": "object",
+      "title": "Last Stats"
+     },
+     "sla_seconds": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Sla Seconds"
+     },
+     "stale": {
+      "type": "boolean",
+      "title": "Stale"
+     }
+    },
+    "type": "object",
+    "required": [
+     "name",
+     "enabled",
+     "last_ok_at",
+     "next_run_at",
+     "running",
+     "last_status",
+     "last_error",
+     "last_stats",
+     "sla_seconds",
+     "stale"
+    ],
+    "title": "JobStatus"
+   },
+   "LoginIn": {
+    "properties": {
+     "passphrase": {
+      "type": "string",
+      "title": "Passphrase"
+     }
+    },
+    "type": "object",
+    "required": [
+     "passphrase"
+    ],
+    "title": "LoginIn"
+   },
+   "PersonProfile": {
+    "properties": {
+     "entity": {
+      "$ref": "#/components/schemas/EntityLink"
+     },
+     "identifiers": {
+      "additionalProperties": {
+       "type": "string"
+      },
+      "type": "object",
+      "title": "Identifiers"
+     },
+     "tags": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Tags"
+     },
+     "summary": {
+      "type": "string",
+      "title": "Summary"
+     },
+     "summary_source": {
+      "type": "string",
+      "title": "Summary Source"
+     },
+     "roles": {
+      "items": {
+       "$ref": "#/components/schemas/RoleOut"
+      },
+      "type": "array",
+      "title": "Roles"
+     },
+     "stats": {
+      "$ref": "#/components/schemas/PersonStats"
+     }
+    },
+    "type": "object",
+    "required": [
+     "entity",
+     "identifiers",
+     "tags",
+     "summary",
+     "summary_source",
+     "roles",
+     "stats"
+    ],
+    "title": "PersonProfile"
+   },
+   "PersonStats": {
+    "properties": {
+     "trades": {
+      "type": "integer",
+      "title": "Trades"
+     },
+     "open_market_buys": {
+      "type": "integer",
+      "title": "Open Market Buys"
+     },
+     "open_market_sells": {
+      "type": "integer",
+      "title": "Open Market Sells"
+     },
+     "buy_value": {
+      "anyOf": [
+       {
+        "type": "string",
+        "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Buy Value"
+     },
+     "sell_value": {
+      "anyOf": [
+       {
+        "type": "string",
+        "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Sell Value"
+     },
+     "buys_left_out": {
+      "type": "integer",
+      "title": "Buys Left Out",
+      "description": "counted buys whose value is left out of buy_value: a figure that can't be right as filed, or a price in another currency",
+      "default": 0
+     },
+     "sells_left_out": {
+      "type": "integer",
+      "title": "Sells Left Out",
+      "description": "the same for sales and sell_value",
+      "default": 0
+     },
+     "first_filed": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "First Filed",
+      "description": "the earliest filing date among the Forms 3, 4 and 5 on record that name this owner (a Form 3 with no trades counts) and the Form 144 notices they filed as the seller"
+     },
+     "last_filed": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Last Filed",
+      "description": "the latest such filing date"
+     },
+     "planned_sales": {
+      "type": "integer",
+      "title": "Planned Sales",
+      "description": "current Form 144 notices this person or organization filed as the seller (a notice replaced by an amendment isn't counted)",
+      "default": 0
+     },
+     "median_delay_days": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Median Delay Days"
+     },
+     "late_filings": {
+      "type": "integer",
+      "title": "Late Filings"
+     },
+     "sales_under_10b5_1_pct": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Sales Under 10B5 1 Pct"
+     }
+    },
+    "type": "object",
+    "required": [
+     "trades",
+     "open_market_buys",
+     "open_market_sells",
+     "buy_value",
+     "sell_value",
+     "first_filed",
+     "last_filed",
+     "median_delay_days",
+     "late_filings",
+     "sales_under_10b5_1_pct"
+    ],
+    "title": "PersonStats"
+   },
+   "PlannedSaleMatchOut": {
+    "properties": {
+     "transaction_id": {
+      "type": "integer",
+      "title": "Transaction Id"
+     },
+     "traded_on": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Traded On"
+     },
+     "shares": {
+      "anyOf": [
+       {
+        "type": "string",
+        "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Shares"
+     },
+     "price": {
+      "anyOf": [
+       {
+        "type": "string",
+        "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Price"
+     },
+     "confidence": {
+      "type": "string",
+      "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+      "title": "Confidence"
+     }
+    },
+    "type": "object",
+    "required": [
+     "transaction_id",
+     "traded_on",
+     "shares",
+     "price",
+     "confidence"
+    ],
+    "title": "PlannedSaleMatchOut",
+    "description": "A Form 4 sale linked to a Form 144 notice as its likely execution."
+   },
+   "PlannedSaleOut": {
+    "properties": {
+     "id": {
+      "type": "integer",
+      "title": "Id"
+     },
+     "accession": {
+      "type": "string",
+      "title": "Accession"
+     },
+     "filing_url": {
+      "type": "string",
+      "title": "Filing Url"
+     },
+     "filed_on": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Filed On"
+     },
+     "seller": {
+      "$ref": "#/components/schemas/EntityLink"
+     },
+     "issuer": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/EntityLink"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "the company whose shares the notice is about (given on a seller's profile)"
+     },
+     "ticker": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Ticker",
+      "description": "that company's ticker, when it has a ticker page"
+     },
+     "relationships": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Relationships"
+     },
+     "shares": {
+      "anyOf": [
+       {
+        "type": "string",
+        "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Shares"
+     },
+     "market_value": {
+      "anyOf": [
+       {
+        "type": "string",
+        "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Market Value"
+     },
+     "approx_sale_on": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Approx Sale On"
+     },
+     "status": {
+      "type": "string",
+      "title": "Status"
+     },
+     "matched_shares": {
+      "anyOf": [
+       {
+        "type": "string",
+        "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Matched Shares"
+     },
+     "plan_adoption_dates": {
+      "items": {
+       "type": "string",
+       "format": "date"
+      },
+      "type": "array",
+      "title": "Plan Adoption Dates"
+     }
+    },
+    "type": "object",
+    "required": [
+     "id",
+     "accession",
+     "filing_url",
+     "filed_on",
+     "seller",
+     "relationships",
+     "shares",
+     "market_value",
+     "approx_sale_on",
+     "status",
+     "matched_shares",
+     "plan_adoption_dates"
+    ],
+    "title": "PlannedSaleOut"
+   },
+   "PositionPoint": {
+    "properties": {
+     "day": {
+      "type": "string",
+      "format": "date",
+      "title": "Day"
+     },
+     "shares": {
+      "type": "string",
+      "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+      "title": "Shares"
+     },
+     "transaction_id": {
+      "type": "integer",
+      "title": "Transaction Id",
+      "description": "the trade whose 'owned after' figure this is"
+     },
+     "filing_url": {
+      "type": "string",
+      "title": "Filing Url",
+      "description": "the filing that reported it"
+     }
+    },
+    "type": "object",
+    "required": [
+     "day",
+     "shares",
+     "transaction_id",
+     "filing_url"
+    ],
+    "title": "PositionPoint"
+   },
+   "PositionSeries": {
+    "properties": {
+     "issuer": {
+      "$ref": "#/components/schemas/EntityLink"
+     },
+     "security_title": {
+      "type": "string",
+      "title": "Security Title"
+     },
+     "ownership": {
+      "type": "string",
+      "title": "Ownership",
+      "description": "direct, or the indirect holder text"
+     },
+     "points": {
+      "items": {
+       "$ref": "#/components/schemas/PositionPoint"
+      },
+      "type": "array",
+      "title": "Points"
+     }
+    },
+    "type": "object",
+    "required": [
+     "issuer",
+     "security_title",
+     "ownership",
+     "points"
+    ],
+    "title": "PositionSeries"
+   },
+   "PriceBarOut": {
+    "properties": {
+     "day": {
+      "type": "string",
+      "format": "date",
+      "title": "Day"
+     },
+     "close": {
+      "type": "string",
+      "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+      "title": "Close"
+     }
+    },
+    "type": "object",
+    "required": [
+     "day",
+     "close"
+    ],
+    "title": "PriceBarOut",
+    "description": "One daily close (split-adjusted, as the provider reports it)."
+   },
+   "PriceSeriesOut": {
+    "properties": {
+     "symbol": {
+      "type": "string",
+      "title": "Symbol"
+     },
+     "provider": {
+      "type": "string",
+      "title": "Provider",
+      "description": "where the prices came from, e.g. finlake or yfinance"
+     },
+     "licence": {
+      "type": "string",
+      "title": "Licence",
+      "description": "personal-use-only | public-display-ok"
+     },
+     "bars": {
+      "items": {
+       "$ref": "#/components/schemas/PriceBarOut"
+      },
+      "type": "array",
+      "title": "Bars"
+     }
+    },
+    "type": "object",
+    "required": [
+     "symbol",
+     "provider",
+     "licence",
+     "bars"
+    ],
+    "title": "PriceSeriesOut",
+    "description": "Daily closes for one ticker from one provider. Private mode only (PLAN.md decision 1)."
+   },
+   "QuarantineRow": {
+    "properties": {
+     "id": {
+      "type": "integer",
+      "title": "Id"
+     },
+     "source": {
+      "type": "string",
+      "title": "Source"
+     },
+     "filing_ref": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Filing Ref"
+     },
+     "filing_url": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Filing Url"
+     },
+     "reason": {
+      "type": "string",
+      "title": "Reason"
+     },
+     "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Created At"
+     }
+    },
+    "type": "object",
+    "required": [
+     "id",
+     "source",
+     "filing_ref",
+     "reason",
+     "created_at"
+    ],
+    "title": "QuarantineRow"
+   },
+   "QueueRow": {
+    "properties": {
+     "status": {
+      "type": "string",
+      "title": "Status"
+     },
+     "items": {
+      "type": "integer",
+      "title": "Items"
+     },
+     "oldest": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date-time"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Oldest"
+     }
+    },
+    "type": "object",
+    "required": [
+     "status",
+     "items",
+     "oldest"
+    ],
+    "title": "QueueRow"
+   },
+   "RoleOut": {
+    "properties": {
+     "organization": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/EntityLink"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "role_type": {
+      "type": "string",
+      "title": "Role Type"
+     },
+     "title": {
+      "type": "string",
+      "title": "Title"
+     },
+     "start_date": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Start Date"
+     },
+     "last_seen_on": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Last Seen On"
+     }
+    },
+    "type": "object",
+    "required": [
+     "organization",
+     "role_type",
+     "title",
+     "start_date",
+     "last_seen_on"
+    ],
+    "title": "RoleOut"
+   },
+   "SearchHit": {
+    "properties": {
+     "kind": {
+      "type": "string",
+      "title": "Kind",
+      "description": "person | fund | company | ticker"
+     },
+     "label": {
+      "type": "string",
+      "title": "Label"
+     },
+     "sublabel": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Sublabel",
+      "description": "ticker: the company; person or fund: role and company, e.g. 'Director, Snowflake Inc.'; company: its ticker"
+     },
+     "href": {
+      "type": "string",
+      "title": "Href"
+     }
+    },
+    "type": "object",
+    "required": [
+     "kind",
+     "label",
+     "sublabel",
+     "href"
+    ],
+    "title": "SearchHit"
+   },
+   "SearchResults": {
+    "properties": {
+     "query": {
+      "type": "string",
+      "title": "Query"
+     },
+     "hits": {
+      "items": {
+       "$ref": "#/components/schemas/SearchHit"
+      },
+      "type": "array",
+      "title": "Hits"
+     }
+    },
+    "type": "object",
+    "required": [
+     "query",
+     "hits"
+    ],
+    "title": "SearchResults"
+   },
+   "SecurityLink": {
+    "properties": {
+     "ticker": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Ticker"
+     },
+     "name": {
+      "type": "string",
+      "title": "Name"
+     },
+     "sector": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Sector"
+     }
+    },
+    "type": "object",
+    "required": [
+     "ticker",
+     "name"
+    ],
+    "title": "SecurityLink"
+   },
+   "SessionOut": {
+    "properties": {
+     "active": {
+      "type": "boolean",
+      "title": "Active"
+     },
+     "configured": {
+      "type": "boolean",
+      "title": "Configured"
+     }
+    },
+    "type": "object",
+    "required": [
+     "active",
+     "configured"
+    ],
+    "title": "SessionOut"
+   },
+   "SourceOut": {
+    "properties": {
+     "key": {
+      "type": "string",
+      "title": "Key"
+     },
+     "name": {
+      "type": "string",
+      "title": "Name"
+     },
+     "reveals": {
+      "type": "string",
+      "title": "Reveals"
+     },
+     "legal_lag": {
+      "type": "string",
+      "title": "Legal Lag"
+     },
+     "our_cadence": {
+      "type": "string",
+      "title": "Our Cadence"
+     },
+     "url": {
+      "type": "string",
+      "title": "Url"
+     },
+     "phase": {
+      "type": "integer",
+      "title": "Phase"
+     },
+     "status": {
+      "type": "string",
+      "title": "Status"
+     }
+    },
+    "type": "object",
+    "required": [
+     "key",
+     "name",
+     "reveals",
+     "legal_lag",
+     "our_cadence",
+     "url",
+     "phase",
+     "status"
+    ],
+    "title": "SourceOut"
+   },
+   "SpotCheckRow": {
+    "properties": {
+     "source": {
+      "type": "string",
+      "title": "Source",
+      "default": "form345"
+     },
+     "transaction_id": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Transaction Id"
+     },
+     "accession": {
+      "type": "string",
+      "title": "Accession"
+     },
+     "form_type": {
+      "type": "string",
+      "title": "Form Type"
+     },
+     "owner": {
+      "type": "string",
+      "title": "Owner"
+     },
+     "owner_slug": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Owner Slug"
+     },
+     "issuer": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Issuer"
+     },
+     "issuer_ticker": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Issuer Ticker"
+     },
+     "code": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Code"
+     },
+     "traded_on": {
+      "title": "Traded On"
+     },
+     "shares": {
+      "title": "Shares"
+     },
+     "price": {
+      "title": "Price"
+     },
+     "filing_url": {
+      "type": "string",
+      "title": "Filing Url"
+     },
+     "document_url": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Document Url"
+     },
+     "value": {
+      "title": "Value"
+     },
+     "direction": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Direction"
+     },
+     "data_issues": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Data Issues",
+      "default": []
+     }
+    },
+    "type": "object",
+    "required": [
+     "transaction_id",
+     "accession",
+     "form_type",
+     "owner",
+     "issuer",
+     "code",
+     "traded_on",
+     "shares",
+     "price",
+     "filing_url",
+     "document_url"
+    ],
+    "title": "SpotCheckRow"
+   },
+   "StatusReport": {
+    "properties": {
+     "generated_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Generated At"
+     },
+     "jobs": {
+      "items": {
+       "$ref": "#/components/schemas/JobStatus"
+      },
+      "type": "array",
+      "title": "Jobs"
+     },
+     "counts": {
+      "additionalProperties": {
+       "type": "integer"
+      },
+      "type": "object",
+      "title": "Counts"
+     },
+     "quarantine_open": {
+      "type": "integer",
+      "title": "Quarantine Open"
+     },
+     "reconciliation": {
+      "items": {
+       "additionalProperties": true,
+       "type": "object"
+      },
+      "type": "array",
+      "title": "Reconciliation"
+     },
+     "detection": {
+      "$ref": "#/components/schemas/DetectionDelay"
+     },
+     "watchdog": {
+      "$ref": "#/components/schemas/WatchdogReport"
+     }
+    },
+    "type": "object",
+    "required": [
+     "generated_at",
+     "jobs",
+     "counts",
+     "quarantine_open",
+     "reconciliation",
+     "detection",
+     "watchdog"
+    ],
+    "title": "StatusReport"
+   },
+   "TickerActivityRow": {
+    "properties": {
+     "security": {
+      "$ref": "#/components/schemas/SecurityLink"
+     },
+     "issuer": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/EntityLink"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "buys": {
+      "type": "integer",
+      "title": "Buys",
+      "description": "open-market purchases (code P)"
+     },
+     "buy_value": {
+      "anyOf": [
+       {
+        "type": "string",
+        "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Buy Value",
+      "description": "sum of reported purchase values; null when there are none"
+     },
+     "sells": {
+      "type": "integer",
+      "title": "Sells",
+      "description": "open-market sales (code S)"
+     },
+     "sell_value": {
+      "anyOf": [
+       {
+        "type": "string",
+        "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Sell Value",
+      "description": "sum of reported sale values; null when there are none"
+     },
+     "net_value": {
+      "anyOf": [
+       {
+        "type": "string",
+        "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Net Value",
+      "description": "buy_value minus sell_value; null when a side has trades but no reported values"
+     },
+     "insiders": {
+      "type": "integer",
+      "title": "Insiders",
+      "description": "distinct insiders the trades are attributed to"
+     },
+     "last_traded_on": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Last Traded On"
+     },
+     "trades_without_price": {
+      "type": "integer",
+      "title": "Trades Without Price",
+      "description": "trades counted above whose filing gives no price, so they have no value and add nothing to the sums (the sums are lower bounds)"
+     },
+     "trades_left_out": {
+      "type": "integer",
+      "title": "Trades Left Out",
+      "description": "trades counted above whose price is stated but left out of the dollar sums: another currency, a currency the filing doesn't state, or a figure that can't be right as filed (buys_left_out + sells_left_out)"
+     },
+     "buys_left_out": {
+      "type": "integer",
+      "title": "Buys Left Out",
+      "description": "purchases among trades_left_out"
+     },
+     "sells_left_out": {
+      "type": "integer",
+      "title": "Sells Left Out",
+      "description": "sales among trades_left_out"
+     }
+    },
+    "type": "object",
+    "required": [
+     "security",
+     "issuer",
+     "buys",
+     "buy_value",
+     "sells",
+     "sell_value",
+     "net_value",
+     "insiders",
+     "last_traded_on",
+     "trades_without_price",
+     "trades_left_out",
+     "buys_left_out",
+     "sells_left_out"
+    ],
+    "title": "TickerActivityRow",
+    "description": "One row of the ticker index: a company's open-market insider trading in the window."
+   },
+   "TickerIndexPage": {
+    "properties": {
+     "items": {
+      "items": {
+       "$ref": "#/components/schemas/TickerActivityRow"
+      },
+      "type": "array",
+      "title": "Items"
+     },
+     "next_cursor": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Next Cursor"
+     },
+     "days": {
+      "type": "integer",
+      "title": "Days"
+     },
+     "since": {
+      "type": "string",
+      "format": "date",
+      "title": "Since",
+      "description": "first trade date in the window (inclusive)"
+     },
+     "until": {
+      "type": "string",
+      "format": "date",
+      "title": "Until",
+      "description": "last trade date in the window (inclusive), today in US Eastern time"
+     }
+    },
+    "type": "object",
+    "required": [
+     "items",
+     "next_cursor",
+     "days",
+     "since",
+     "until"
+    ],
+    "title": "TickerIndexPage"
+   },
+   "TickerProfile": {
+    "properties": {
+     "security": {
+      "$ref": "#/components/schemas/SecurityLink"
+     },
+     "issuer": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/EntityLink"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "sector_source": {
+      "type": "string",
+      "title": "Sector Source"
+     },
+     "exchange": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Exchange"
+     },
+     "identifiers": {
+      "additionalProperties": {
+       "type": "string"
+      },
+      "type": "object",
+      "title": "Identifiers"
+     },
+     "insider_trades": {
+      "type": "integer",
+      "title": "Insider Trades"
+     },
+     "open_market_buys_90d": {
+      "type": "integer",
+      "title": "Open Market Buys 90D"
+     },
+     "open_market_sells_90d": {
+      "type": "integer",
+      "title": "Open Market Sells 90D"
+     },
+     "planned_sales_open": {
+      "type": "integer",
+      "title": "Planned Sales Open"
+     },
+     "last_filed": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Last Filed"
+     }
+    },
+    "type": "object",
+    "required": [
+     "security",
+     "issuer",
+     "sector_source",
+     "exchange",
+     "identifiers",
+     "insider_trades",
+     "open_market_buys_90d",
+     "open_market_sells_90d",
+     "planned_sales_open",
+     "last_filed"
+    ],
+    "title": "TickerProfile"
+   },
+   "TimelineEvent": {
+    "properties": {
+     "layer": {
+      "type": "string",
+      "title": "Layer",
+      "description": "insiders | planned_sales"
+     },
+     "day": {
+      "type": "string",
+      "format": "date",
+      "title": "Day"
+     },
+     "direction": {
+      "type": "string",
+      "title": "Direction"
+     },
+     "label": {
+      "type": "string",
+      "title": "Label"
+     },
+     "value": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Value"
+     },
+     "transaction_id": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Transaction Id"
+     },
+     "filing_url": {
+      "type": "string",
+      "title": "Filing Url"
+     }
+    },
+    "type": "object",
+    "required": [
+     "layer",
+     "day",
+     "direction",
+     "label",
+     "value",
+     "transaction_id",
+     "filing_url"
+    ],
+    "title": "TimelineEvent",
+    "description": "One marker on the ticker event timeline."
+   },
+   "TodayEntry": {
+    "properties": {
+     "ticker": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Ticker"
+     },
+     "issuer": {
+      "type": "string",
+      "title": "Issuer"
+     },
+     "owner": {
+      "$ref": "#/components/schemas/EntityLink"
+     },
+     "role": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Role",
+      "description": "role on the largest lot's filing, e.g. 'Director, 10% owner'"
+     },
+     "value": {
+      "type": "string",
+      "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+      "title": "Value",
+      "description": "total dollar value of the lots"
+     },
+     "shares": {
+      "anyOf": [
+       {
+        "type": "string",
+        "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Shares",
+      "description": "total shares; null when a lot doesn't give its share count"
+     },
+     "lots": {
+      "type": "integer",
+      "title": "Lots",
+      "description": "how many trades (lots) the entry adds up"
+     },
+     "lot_values": {
+      "items": {
+       "type": "string",
+       "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+      },
+      "type": "array",
+      "title": "Lot Values",
+      "description": "each lot's dollar value, largest first"
+     },
+     "largest_transaction_id": {
+      "type": "integer",
+      "title": "Largest Transaction Id",
+      "description": "the largest lot: the amount opens its quick look"
+     },
+     "first_traded_on": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "First Traded On"
+     },
+     "last_traded_on": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Last Traded On"
+     }
+    },
+    "type": "object",
+    "required": [
+     "ticker",
+     "issuer",
+     "owner",
+     "role",
+     "value",
+     "shares",
+     "lots",
+     "lot_values",
+     "largest_transaction_id",
+     "first_traded_on",
+     "last_traded_on"
+    ],
+    "title": "TodayEntry",
+    "description": "One owner's open-market buying (or selling) in one company, disclosed today.\n\nA Form 4 often reports one sale as several lots at different prices, and an\nowner may file more than once a day; all of one owner's lots in one company\nare one entry, so the strip lists five different people, not one person's lots."
+   },
+   "TodaySummary": {
+    "properties": {
+     "day": {
+      "type": "string",
+      "format": "date",
+      "title": "Day",
+      "description": "the day the figures cover: today (US Eastern) on an SEC business day, otherwise the latest SEC business day before today"
+     },
+     "edgar_open_today": {
+      "type": "boolean",
+      "title": "Edgar Open Today",
+      "description": "false on weekends and SEC holidays, when EDGAR accepts no filings (then `day` is the latest business day)"
+     },
+     "largest_buys": {
+      "items": {
+       "$ref": "#/components/schemas/TodayEntry"
+      },
+      "type": "array",
+      "title": "Largest Buys",
+      "description": "up to 5 entries, largest total first"
+     },
+     "largest_sells": {
+      "items": {
+       "$ref": "#/components/schemas/TodayEntry"
+      },
+      "type": "array",
+      "title": "Largest Sells",
+      "description": "up to 5 entries, largest total first"
+     },
+     "filings_by_form": {
+      "additionalProperties": {
+       "type": "integer"
+      },
+      "type": "object",
+      "title": "Filings By Form"
+     },
+     "planned_sales": {
+      "type": "integer",
+      "title": "Planned Sales"
+     },
+     "insiders_buying": {
+      "type": "integer",
+      "title": "Insiders Buying"
+     }
+    },
+    "type": "object",
+    "required": [
+     "day",
+     "edgar_open_today",
+     "largest_buys",
+     "largest_sells",
+     "filings_by_form",
+     "planned_sales",
+     "insiders_buying"
+    ],
+    "title": "TodaySummary",
+    "description": "The \"today\" strip on the Live page (US Eastern date).\n\nEDGAR takes no filings on weekends and federal holidays, so on those days the strip\ncovers the latest SEC business day instead of an empty \"today\" (see feed.strip_day)."
+   },
+   "TradeCopy": {
+    "properties": {
+     "trade_id": {
+      "type": "integer",
+      "title": "Trade Id"
+     },
+     "owner": {
+      "$ref": "#/components/schemas/EntityLink",
+      "description": "the owner that row is filed under"
+     }
+    },
+    "type": "object",
+    "required": [
+     "trade_id",
+     "owner"
+    ],
+    "title": "TradeCopy",
+    "description": "Another filing's row for the same trade (see smt.ingest.quality.mark_duplicates)."
+   },
+   "TradeDetail": {
+    "properties": {
+     "trade": {
+      "$ref": "#/components/schemas/TradeRow"
+     },
+     "owners": {
+      "items": {
+       "$ref": "#/components/schemas/EntityLink"
+      },
+      "type": "array",
+      "title": "Owners"
+     },
+     "footnotes": {
+      "items": {
+       "$ref": "#/components/schemas/FootnoteOut"
+      },
+      "type": "array",
+      "title": "Footnotes"
+     },
+     "remarks": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Remarks"
+     },
+     "raw_document_url": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Raw Document Url"
+     },
+     "superseded_by": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Superseded By"
+     },
+     "supersedes": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Supersedes"
+     },
+     "review_note": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Review Note"
+     },
+     "source_note": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Source Note",
+      "description": "set when the row came from the SEC bulk data set (rounded values)"
+     },
+     "copies": {
+      "items": {
+       "$ref": "#/components/schemas/TradeCopy"
+      },
+      "type": "array",
+      "title": "Copies",
+      "description": "other filings' current rows for this same trade that point at this one (duplicate_of), directly or through another copy; totals count the trade once"
+     }
+    },
+    "type": "object",
+    "required": [
+     "trade",
+     "owners",
+     "footnotes",
+     "remarks",
+     "raw_document_url",
+     "superseded_by",
+     "supersedes",
+     "review_note"
+    ],
+    "title": "TradeDetail",
+    "description": "Everything the quick-look drawer shows for one trade."
+   },
+   "TradePage": {
+    "properties": {
+     "items": {
+      "items": {
+       "$ref": "#/components/schemas/TradeRow"
+      },
+      "type": "array",
+      "title": "Items"
+     },
+     "next_cursor": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Next Cursor"
+     }
+    },
+    "type": "object",
+    "required": [
+     "items",
+     "next_cursor"
+    ],
+    "title": "TradePage"
+   },
+   "TradeRow": {
+    "properties": {
+     "id": {
+      "type": "integer",
+      "title": "Id"
+     },
+     "accession": {
+      "type": "string",
+      "title": "Accession"
+     },
+     "form_type": {
+      "type": "string",
+      "title": "Form Type"
+     },
+     "filing_url": {
+      "type": "string",
+      "title": "Filing Url"
+     },
+     "traded_on": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Traded On"
+     },
+     "filed_on": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Filed On"
+     },
+     "accepted_at": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date-time"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Accepted At"
+     },
+     "detected_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Detected At"
+     },
+     "delay_days": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Delay Days"
+     },
+     "is_late": {
+      "anyOf": [
+       {
+        "type": "boolean"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Is Late"
+     },
+     "deadline_rule": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Deadline Rule"
+     },
+     "code": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Code"
+     },
+     "code_label": {
+      "type": "string",
+      "title": "Code Label"
+     },
+     "direction": {
+      "type": "string",
+      "title": "Direction"
+     },
+     "is_open_market": {
+      "type": "boolean",
+      "title": "Is Open Market"
+     },
+     "is_derivative": {
+      "type": "boolean",
+      "title": "Is Derivative"
+     },
+     "security_title": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Security Title"
+     },
+     "ticker": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Ticker"
+     },
+     "issuer": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/EntityLink"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "owner": {
+      "$ref": "#/components/schemas/EntityLink"
+     },
+     "joint_owners": {
+      "type": "integer",
+      "title": "Joint Owners"
+     },
+     "owner_type": {
+      "type": "string",
+      "title": "Owner Type"
+     },
+     "shares": {
+      "anyOf": [
+       {
+        "type": "string",
+        "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Shares"
+     },
+     "price": {
+      "anyOf": [
+       {
+        "type": "string",
+        "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Price"
+     },
+     "price_is_weighted_avg": {
+      "type": "boolean",
+      "title": "Price Is Weighted Avg"
+     },
+     "value": {
+      "anyOf": [
+       {
+        "type": "string",
+        "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Value"
+     },
+     "shares_owned_after": {
+      "anyOf": [
+       {
+        "type": "string",
+        "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Shares Owned After"
+     },
+     "is_10b5_1": {
+      "anyOf": [
+       {
+        "type": "boolean"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Is 10B5 1"
+     },
+     "exercise_and_sell": {
+      "type": "boolean",
+      "title": "Exercise And Sell"
+     },
+     "is_current": {
+      "type": "boolean",
+      "title": "Is Current"
+     },
+     "data_issues": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Data Issues",
+      "description": "values that can't be right as filed: date_after_filing, value_implausible (numbers are shown as filed but left out of rankings and totals); amendment_unpaired (an amended row that couldn't be matched to the row it corrects, so it may repeat it: left out of totals)"
+     },
+     "in_totals": {
+      "type": "boolean",
+      "title": "In Totals",
+      "description": "counted in the totals this row sits next to. On a person's trades list that is the person's own totals (smt.api.queries.PERSON_COUNTED); everywhere else the site-wide totals (COUNTED). Only open-market buys and sells are ever counted."
+     },
+     "duplicate_of": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/TradeCopy"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "set when another filing reports the same trade (a fund and its general partner, or the same trade filed again): the copy that the totals next to this row count (on a person's trades list, that person's own totals; elsewhere the site-wide totals). The site-wide totals never count this row; `in_totals` says whether the totals next to it do."
+     }
+    },
+    "type": "object",
+    "required": [
+     "id",
+     "accession",
+     "form_type",
+     "filing_url",
+     "traded_on",
+     "filed_on",
+     "accepted_at",
+     "detected_at",
+     "delay_days",
+     "is_late",
+     "deadline_rule",
+     "code",
+     "code_label",
+     "direction",
+     "is_open_market",
+     "is_derivative",
+     "security_title",
+     "ticker",
+     "issuer",
+     "owner",
+     "joint_owners",
+     "owner_type",
+     "shares",
+     "price",
+     "price_is_weighted_avg",
+     "value",
+     "shares_owned_after",
+     "is_10b5_1",
+     "exercise_and_sell",
+     "is_current",
+     "in_totals"
+    ],
+    "title": "TradeRow",
+    "description": "A transaction as shown in trade tables (person, ticker)."
+   },
+   "ValidationError": {
+    "properties": {
+     "loc": {
+      "items": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "integer"
+        }
+       ]
+      },
+      "type": "array",
+      "title": "Location"
+     },
+     "msg": {
+      "type": "string",
+      "title": "Message"
+     },
+     "type": {
+      "type": "string",
+      "title": "Error Type"
+     },
+     "input": {
+      "title": "Input"
+     },
+     "ctx": {
+      "type": "object",
+      "title": "Context"
+     }
+    },
+    "type": "object",
+    "required": [
+     "loc",
+     "msg",
+     "type"
+    ],
+    "title": "ValidationError"
+   },
+   "WatchdogFindingOut": {
+    "properties": {
+     "id": {
+      "type": "integer",
+      "title": "Id"
+     },
+     "key": {
+      "type": "string",
+      "title": "Key",
+      "description": "stable identity of the problem, e.g. stale_source:edgar.poll_ownership"
+     },
+     "check": {
+      "type": "string",
+      "title": "Check",
+      "description": "stale_source | edgar_queue | quarantine | lease | abandoned_runs | job_failed"
+     },
+     "kind": {
+      "type": "string",
+      "title": "Kind",
+      "description": "condition (open until it stops holding) | event (recorded already resolved)"
+     },
+     "severity": {
+      "type": "string",
+      "title": "Severity",
+      "description": "info | warning | critical"
+     },
+     "subject": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Subject",
+      "description": "the job or source concerned, when there is one"
+     },
+     "title": {
+      "type": "string",
+      "title": "Title",
+      "description": "one plain sentence"
+     },
+     "detail": {
+      "type": "string",
+      "title": "Detail"
+     },
+     "data": {
+      "additionalProperties": true,
+      "type": "object",
+      "title": "Data",
+      "description": "the numbers behind the finding"
+     },
+     "opened_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Opened At"
+     },
+     "last_seen_at": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Last Seen At",
+      "description": "the last watchdog run that still saw the problem"
+     },
+     "cleared_at": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date-time"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Cleared At",
+      "description": "null while the problem is still open"
+     },
+     "open_alert": {
+      "type": "string",
+      "title": "Open Alert",
+      "description": "alert about the start: pending | sent | logged | failed | skipped | none"
+     },
+     "clear_alert": {
+      "type": "string",
+      "title": "Clear Alert",
+      "description": "alert about the end: pending | sent | logged | failed | skipped | none"
+     },
+     "alert_error": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Alert Error",
+      "description": "why the last delivery attempt failed, if it did"
+     }
+    },
+    "type": "object",
+    "required": [
+     "id",
+     "key",
+     "check",
+     "kind",
+     "severity",
+     "subject",
+     "title",
+     "detail",
+     "data",
+     "opened_at",
+     "last_seen_at",
+     "cleared_at",
+     "open_alert",
+     "clear_alert",
+     "alert_error"
+    ],
+    "title": "WatchdogFindingOut",
+    "description": "One problem the watchdog noticed (smt.worker.watchdog), and what was sent about it."
+   },
+   "WatchdogReport": {
+    "properties": {
+     "last_run_at": {
+      "anyOf": [
+       {
+        "type": "string",
+        "format": "date-time"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Last Run At",
+      "description": "last successful watchdog run; null if it has never run"
+     },
+     "alert_channel": {
+      "type": "string",
+      "title": "Alert Channel",
+      "description": "apprise (APPRISE_URLS is set) | log (alerts only go to the log)"
+     },
+     "open": {
+      "items": {
+       "$ref": "#/components/schemas/WatchdogFindingOut"
+      },
+      "type": "array",
+      "title": "Open",
+      "description": "problems still open, most severe first"
+     },
+     "recent": {
+      "items": {
+       "$ref": "#/components/schemas/WatchdogFindingOut"
+      },
+      "type": "array",
+      "title": "Recent",
+      "description": "problems resolved in the last 7 days, newest first"
+     }
+    },
+    "type": "object",
+    "required": [
+     "last_run_at",
+     "alert_channel",
+     "open",
+     "recent"
+    ],
+    "title": "WatchdogReport",
+    "description": "The watchdog's view: open problems and recently resolved ones."
+   },
+   "WorkerHealth": {
+    "properties": {
+     "status": {
+      "type": "string",
+      "title": "Status",
+      "default": "ok"
+     },
+     "problems": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Problems"
+     }
+    },
+    "type": "object",
+    "required": [
+     "problems"
+    ],
+    "title": "WorkerHealth"
+   }
+  }
+ }
+}
