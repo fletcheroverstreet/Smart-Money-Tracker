@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?><edgarSubmission xmlns="http://www.sec.gov/edgar/ownership" xmlns:com="http://www.sec.gov/edgar/common">
+  <headerData>
+    <submissionType>144</submissionType>
+    <filerInfo>
+      <filer>
+        <filerCredentials>
+          <cik>0001821737</cik>
+          <ccc>XXXXXXXX</ccc>
+        </filerCredentials>
+      </filer>
+      <liveTestFlag>LIVE</liveTestFlag>
+
+
+
+    </filerInfo>
+  </headerData>
+  <formData>
+    <issuerInfo>
+      <issuerCik>0001640147</issuerCik>
+      <issuerName>Snowflake Inc.</issuerName>
+      <secFileNumber>001-39504</secFileNumber>
+      <issuerAddress>
+        <com:street1>135 CONSTITUTION DRIVE</com:street1>
+        <com:city>MENLO PARK</com:city>
+        <com:stateOrCountry>CA</com:stateOrCountry>
+        <com:zipCode>94025</com:zipCode>
+      </issuerAddress>
+      <issuerContactPhone>844-766-9355</issuerContactPhone>
+      <nameOfPersonForWhoseAccountTheSecuritiesAreToBeSold>Dageville Benoit</nameOfPersonForWhoseAccountTheSecuritiesAreToBeSold>
+      <relationshipsToIssuer>
+        <relationshipToIssuer>Officer</relationshipToIssuer>
+        <relationshipToIssuer>Director</relationshipToIssuer>
+      </relationshipsToIssuer>
+    </issuerInfo>
+    <securitiesInformation>
+      <securitiesClassTitle>Common</securitiesClassTitle>
+      <brokerOrMarketmakerDetails>
+        <name>Fidelity Brokerage Services LLC</name>
+        <address>
+          <com:street1>900 Salem Street</com:street1>
+          <com:city>Smithfield</com:city>
+          <com:stateOrCountry>RI</com:stateOrCountry>
+          <com:zipCode>02917</com:zipCode>
+        </address>
+      </brokerOrMarketmakerDetails>
+      <noOfUnitsSold>50000</noOfUnitsSold>
+      <aggregateMarketValue>16786000.00</aggregateMarketValue>
+      <noOfUnitsOutstanding>352800000</noOfUnitsOutstanding>
+      <approxSaleDate>09/09/2026</approxSaleDate>
+      <securitiesExchangeName>NYSE</securitiesExchangeName>
+    </securitiesInformation>
+    <securitiesToBeSold>
+      <securitiesClassTitle>Common</securitiesClassTitle>
+      <acquiredDate>08/01/2012</acquiredDate>
+      <natureOfAcquisitionTransaction>Founders Shares</natureOfAcquisitionTransaction>
+      <nameOfPersonfromWhomAcquired>Issuer</nameOfPersonfromWhomAcquired>
+      <isGiftTransaction>N</isGiftTransaction>
+      <amountOfSecuritiesAcquired>50000</amountOfSecuritiesAcquired>
+      <paymentDate>08/01/2012</paymentDate>
+      <natureOfPayment>Compensation</natureOfPayment>
+    </securitiesToBeSold>
+    <nothingToReportFlagOnSecuritiesSoldInPast3Months>N</nothingToReportFlagOnSecuritiesSoldInPast3Months>
+    <securitiesSoldInPast3Months>
+      <sellerDetails>
+        <name>Benoit Dageville</name>
+        <address>
+          <com:street1>135 Constitution Drive</com:street1>
+          <com:city>Menlo Park</com:city>
+          <com:stateOrCountry>CA</com:stateOrCountry>
+          <com:zipCode>94025</com:zipCode>
+        </address>
+      </sellerDetails>
+      <securitiesClassTitle>Common</securitiesClassTitle>
+      <saleDate>07/02/2026</saleDate>
+      <amountOfSecuritiesSold>140819</amountOfSecuritiesSold>
+      <grossProceeds>35858150.16</grossProceeds>
+    </securitiesSoldInPast3Months>
+    <securitiesSoldInPast3Months>
+      <sellerDetails>
+        <name>The Snow Trust U/A Dtd 9/10/2019</name>
+        <address>
+          <com:street1>135 Constitution Drive</com:street1>
+          <com:city>Menlo Park</com:city>
+          <com:stateOrCountry>CA</com:stateOrCountry>
+          <com:zipCode>94025</com:zipCode>
+        </address>
+      </sellerDetails>
+      <securitiesClassTitle>Common</securitiesClassTitle>
+      <saleDate>07/02/2026</saleDate>
+      <amountOfSecuritiesSold>50000</amountOfSecuritiesSold>
+      <grossProceeds>12732000.00</grossProceeds>
+    </securitiesSoldInPast3Months>
+    <securitiesSoldInPast3Months>
+      <sellerDetails>
+        <name>The Snow Trust U/A Dtd 9/10/2019</name>
+        <address>
+          <com:street1>135 Constitution Drive</com:street1>
+          <com:city>Menlo Park</com:city>
+          <com:stateOrCountry>CA</com:stateOrCountry>
+          <com:zipCode>94025</com:zipCode>
+        </address>
+      </sellerDetails>
+      <securitiesClassTitle>Common</securitiesClassTitle>
+      <saleDate>07/15/2026</saleDate>
+      <amountOfSecuritiesSold>50000</amountOfSecuritiesSold>
+      <grossProceeds>13826500.00</grossProceeds>
+    </securitiesSoldInPast3Months>
+    <securitiesSoldInPast3Months>
+      <sellerDetails>
+        <name>The Snow Trust U/A Dtd 9/10/2019</name>
+        <address>
+          <com:street1>135 Constitution Drive</com:street1>
+          <com:city>Menlo Park</com:city>
+          <com:stateOrCountry>CA</com:stateOrCountry>
+          <com:zipCode>94025</com:zipCode>
+        </address>
+      </sellerDetails>
+      <securitiesClassTitle>Common</securitiesClassTitle>
+      <saleDate>07/29/2026</saleDate>
+      <amountOfSecuritiesSold>50000</amountOfSecuritiesSold>
+      <grossProceeds>14000000.00</grossProceeds>
+    </securitiesSoldInPast3Months>
+    <securitiesSoldInPast3Months>
+      <sellerDetails>
+        <name>The Snow Trust U/A Dtd 9/10/2019</name>
+        <address>
+          <com:street1>135 Constitution Drive</com:street1>
+          <com:city>Menlo Park</com:city>
+          <com:stateOrCountry>CA</com:stateOrCountry>
+          <com:zipCode>94025</com:zipCode>
+        </address>
+      </sellerDetails>
+      <securitiesClassTitle>Common</securitiesClassTitle>
+      <saleDate>08/12/2026</saleDate>
+      <amountOfSecuritiesSold>50000</amountOfSecuritiesSold>
+      <grossProceeds>16785000.00</grossProceeds>
+    </securitiesSoldInPast3Months>
+    <securitiesSoldInPast3Months>
+      <sellerDetails>
+        <name>The Snow Trust U/A Dtd 9/10/2019</name>
+        <address>
+          <com:street1>135 Constitution Drive</com:street1>
+          <com:city>Menlo Park</com:city>
+          <com:stateOrCountry>CA</com:stateOrCountry>
+          <com:zipCode>94025</com:zipCode>
+        </address>
+      </sellerDetails>
+      <securitiesClassTitle>Common</securitiesClassTitle>
+      <saleDate>08/26/2026</saleDate>
+      <amountOfSecuritiesSold>50000</amountOfSecuritiesSold>
+      <grossProceeds>15472000.00</grossProceeds>
+    </securitiesSoldInPast3Months>
+    <remarks>Today's sale and some sales taking place in the past 3 months occurred in The Snow Trust U/A Dtd 9/10/2019 of which Benoit Dageville is a trustee and account stakeholder.</remarks>
+    <noticeSignature>
+      <noticeDate>09/09/2026</noticeDate>
+      <planAdoptionDates>
+        <planAdoptionDate>04/03/2026</planAdoptionDate>
+      </planAdoptionDates>
+      <signature>/s/Wade Moss, as a duly authorized representative of Fidelity Brokerage Services LLC, as attorney-in-fact for Benoit Dageville</signature>
+    </noticeSignature>
+  </formData>
+</edgarSubmission>

@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?><edgarSubmission xmlns="http://www.sec.gov/edgar/ownership" xmlns:ns2="http://www.sec.gov/edgar/common">
+    <headerData>
+        <submissionType>144/A</submissionType>
+        <previousAccessionNumber>0001950047-26-009654</previousAccessionNumber>
+        <filerInfo>
+            <filer>
+                <filerCredentials>
+                    <cik>0002014983</cik>
+                    <ccc>XXXXXXXX</ccc>
+                </filerCredentials>
+            </filer>
+            <liveTestFlag>LIVE</liveTestFlag>
+
+
+
+        </filerInfo>
+    </headerData>
+    <formData>
+        <issuerInfo>
+            <issuerCik>0001830487</issuerCik>
+            <issuerName>PHARVARIS N.V.</issuerName>
+            <secFileNumber>001-40010</secFileNumber>
+            <issuerAddress>
+                <ns2:street1>Emmy Noetherweg 2</ns2:street1>
+                <ns2:city>Leiden</ns2:city>
+                <ns2:stateOrCountry>P7</ns2:stateOrCountry>
+                <ns2:zipCode>2333 BK</ns2:zipCode>
+            </issuerAddress>
+            <issuerContactPhone>31 (0)71 2036 410</issuerContactPhone>
+            <nameOfPersonForWhoseAccountTheSecuritiesAreToBeSold>JOHANNES GER. CHRIS. PE SCHIKAN</nameOfPersonForWhoseAccountTheSecuritiesAreToBeSold>
+            <relationshipsToIssuer>
+                <relationshipToIssuer>Officer</relationshipToIssuer>
+                <relationshipToIssuer>Director</relationshipToIssuer>
+            </relationshipsToIssuer>
+        </issuerInfo>
+        <securitiesInformation>
+            <securitiesClassTitle>Common</securitiesClassTitle>
+            <brokerOrMarketmakerDetails>
+                <name>Morgan Stanley Smith Barney LLC Executive Financial Services</name>
+                <address>
+                    <ns2:street1>1 New York Plaza</ns2:street1>
+                    <ns2:street2>8th Floor</ns2:street2>
+                    <ns2:city>New York</ns2:city>
+                    <ns2:stateOrCountry>NY</ns2:stateOrCountry>
+                    <ns2:zipCode>10004</ns2:zipCode>
+                </address>
+            </brokerOrMarketmakerDetails>
+            <noOfUnitsSold>200000</noOfUnitsSold>
+            <aggregateMarketValue>7000000.00</aggregateMarketValue>
+            <noOfUnitsOutstanding>65210590</noOfUnitsOutstanding>
+            <approxSaleDate>09/17/2026</approxSaleDate>
+            <securitiesExchangeName>NASDAQ</securitiesExchangeName>
+        </securitiesInformation>
+        <securitiesToBeSold>
+            <securitiesClassTitle>Common</securitiesClassTitle>
+            <acquiredDate>12/23/2015</acquiredDate>
+            <natureOfAcquisitionTransaction>Founder Stock</natureOfAcquisitionTransaction>
+            <nameOfPersonfromWhomAcquired>Issuer</nameOfPersonfromWhomAcquired>
+            <isGiftTransaction>N</isGiftTransaction>
+            <amountOfSecuritiesAcquired>200000</amountOfSecuritiesAcquired>
+            <paymentDate>12/23/2015</paymentDate>
+            <natureOfPayment>Cash</natureOfPayment>
+        </securitiesToBeSold>
+        <nothingToReportFlagOnSecuritiesSoldInPast3Months>N</nothingToReportFlagOnSecuritiesSoldInPast3Months>
+        <securitiesSoldInPast3Months>
+            <sellerDetails>
+                <name>JOHANNES GER. CHRIS. PE SCHIKAN</name>
+                <address>
+                    <ns2:street1>Emmy Noetherweg 2</ns2:street1>
+                    <ns2:city>Leiden</ns2:city>
+                    <ns2:stateOrCountry>P7</ns2:stateOrCountry>
+                    <ns2:zipCode>2333 BK</ns2:zipCode>
+                </address>
+            </sellerDetails>
+            <securitiesClassTitle>Common</securitiesClassTitle>
+            <saleDate>06/30/2026</saleDate>
+            <amountOfSecuritiesSold>30712</amountOfSecuritiesSold>
+            <grossProceeds>1090048.73</grossProceeds>
+        </securitiesSoldInPast3Months>
+        <securitiesSoldInPast3Months>
+            <sellerDetails>
+                <name>JOHANNES GER. CHRIS. PE SCHIKAN</name>
+                <address>
+                    <ns2:street1>Emmy Noetherweg 2</ns2:street1>
+                    <ns2:city>Leiden</ns2:city>
+                    <ns2:stateOrCountry>P7</ns2:stateOrCountry>
+                    <ns2:zipCode>2333 BK</ns2:zipCode>
+                </address>
+            </sellerDetails>
+            <securitiesClassTitle>Common</securitiesClassTitle>
+            <saleDate>06/29/2026</saleDate>
+            <amountOfSecuritiesSold>6888</amountOfSecuritiesSold>
+            <grossProceeds>241424.40</grossProceeds>
+        </securitiesSoldInPast3Months>
+        <securitiesSoldInPast3Months>
+            <sellerDetails>
+                <name>JOHANNES GER. CHRIS. PE SCHIKAN</name>
+                <address>
+                    <ns2:street1>Emmy Noetherweg 2</ns2:street1>
+                    <ns2:city>Leiden</ns2:city>
+                    <ns2:stateOrCountry>P7</ns2:stateOrCountry>
+                    <ns2:zipCode>2333 BK</ns2:zipCode>
+                </address>
+            </sellerDetails>
+            <securitiesClassTitle>Common</securitiesClassTitle>
+            <saleDate>06/29/2026</saleDate>
+            <amountOfSecuritiesSold>2400</amountOfSecuritiesSold>
+            <grossProceeds>84240.00</grossProceeds>
+        </securitiesSoldInPast3Months>
+        <remarks>This Form 144/A is being filed to amend Amount of Securities Sold and Gross Proceeds for trade completed on 06/30/2026.</remarks>
+        <noticeSignature>
+            <noticeDate>09/22/2026</noticeDate>
+            <planAdoptionDates/>
+            <signature>/s/ Johannes Gerardus Christiaan Petrus Schikan</signature>
+        </noticeSignature>
+    </formData>
+</edgarSubmission>
